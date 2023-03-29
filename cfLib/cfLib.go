@@ -18,9 +18,10 @@ type ApiObj struct {
     ApiToken string `yaml:"ApiToken"`
 //    CADirUrl  string `yaml:"CA_DIR_URL"`
     Email     string `yaml:"Email"`
+	YamlFile	string
 }
 
-func InitCl(yamlFilNam string) (apiObjRef *ApiObj, err error) {
+func InitClLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	var apiObj ApiObj
 
     // open file and decode
@@ -34,6 +35,12 @@ func InitCl(yamlFilNam string) (apiObjRef *ApiObj, err error) {
     if err := yaml.Unmarshal(buf, &apiObj); err !=nil {
 		return nil, fmt.Errorf("error Unmarshalling Yaml File: %v\n", err)
     }
+
+	if apiObj.Api != "cloudflare" {
+		return nil, fmt.Errorf("Api is not cloudflare!")
+	}
+
+	apiObj.YamlFile = yamlFilNam
 
 	return &apiObj, nil
 }
