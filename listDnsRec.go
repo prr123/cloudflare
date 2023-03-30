@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+    util "github.com/prr123/utility/utilLib"
 //    yaml "github.com/goccy/go-yaml"
 	"ns/cloudflare/cfLib"
 	"github.com/cloudflare/cloudflare-go"
@@ -14,15 +15,35 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-    if numArgs > 2 {
-        fmt.Printf("CLI args are not equal to 2: %d\n", numArgs)
-        fmt.Printf("usage: readCFYaml yaml file\n")
-        os.Exit(-1)
+    if numArgs < 2 {
+        fmt.Printf("usage: readCFYaml domain [/yaml=file]\n")
+        log.Fatalf("insufficient CLI args!\n")
+    }
+	if numArgs > 3 {
+        fmt.Printf("usage: readCFYaml domain [/yaml=file]\n")
+        log.Fatalf("too many CLI args!\n")
     }
 
+	domain := os.Args[1]
     yamlFilNam := "cloudflareApi.yaml"
 
-    if numArgs == 2 {yamlFilNam = os.Args[1]}
+    if numArgs == 3 {
+
+		flags := []string{"yaml"}
+		flagMap, err := util.ParseFlags(os.Args, flags)
+		if err != nil {
+			log.Fatalf("error parseFlags: %v\n",err)
+    	}
+
+		val, ok := flagMap["yaml"]
+		if !ok {
+			log.Fatalf("no yaml file specified!")
+		}
+		yamlFilNam, ok = val.(string)
+		if !ok {
+			log.Fatalf("no yaml file value not a string!")
+		}
+	}
 
     log.Printf("Using yaml file: %s\n", yamlFilNam)
 
@@ -50,7 +71,7 @@ func main() {
 	// try to list DNS Parameters
 
 	var listDns cloudflare.ListDNSRecordsParams
-	listDns.Name = "azulacademy.eu"
+	listDns.Name = domain
 
 	var rc cloudflare.ResourceContainer
 	rc.Level = cloudflare.ZoneRouteLevel
