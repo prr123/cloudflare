@@ -11,6 +11,7 @@ import (
 
     yaml "github.com/goccy/go-yaml"
     "github.com/cloudflare/cloudflare-go"
+	json "github.com/goccy/go-json"
 )
 
 
@@ -46,6 +47,28 @@ func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 
 	return &apiObj, nil
 }
+
+func SaveZones(zones []cloudflare.Zone, outfil *os.File)(err error) {
+
+	if outfil == nil { return fmt.Errorf("no file provided!")}
+	jsdata, err := json.Marshal(zones)
+	if err != nil {return fmt.Errorf("could not convertZone: %v", err)}
+
+	_, err = outfil.Write(jsdata)
+	if err != nil {return fmt.Errorf("jsdata os.Write: %v", err)}
+	return nil
+}
+
+func PrintZones(zones []cloudflare.Zone) {
+
+    fmt.Printf("************** Zones/Domains [%d] *************\n", len(zones))
+
+    for i:=0; i< len(zones); i++ {
+        zone := zones[i]
+        fmt.Printf("%d %-20s %s\n",i+1, zone.Name, zone.ID)
+    }
+}
+
 
 
 func PrintApiObj (apiObj *ApiObj) {
