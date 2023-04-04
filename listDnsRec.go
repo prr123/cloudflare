@@ -15,16 +15,16 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-    if numArgs < 2 {
-        fmt.Printf("usage: readCFYaml domain [/yaml=file]\n")
+    if numArgs < 1 {
+        fmt.Printf("usage: listDnsRec [/yaml=file]\n")
         log.Fatalf("insufficient CLI args!\n")
     }
-	if numArgs > 3 {
-        fmt.Printf("usage: readCFYaml domain [/yaml=file]\n")
+	if numArgs > 2 {
+        fmt.Printf("usage: listDnsRec [/yaml=file]\n")
         log.Fatalf("too many CLI args!\n")
     }
 
-	domain := os.Args[1]
+//	domain := os.Args[1]
     yamlFilNam := "cloudflareApi.yaml"
 
     if numArgs == 3 {
@@ -71,7 +71,7 @@ func main() {
 	// try to list DNS Parameters
 
 	var listDns cloudflare.ListDNSRecordsParams
-	listDns.Name = domain
+//	listDns.Name = domain
 
 	var rc cloudflare.ResourceContainer
 	rc.Level = cloudflare.ZoneRouteLevel
