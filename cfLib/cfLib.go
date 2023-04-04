@@ -19,6 +19,7 @@ type ApiObj struct {
     Api    string `yaml:"Api"`
     ApiKey string `yaml:"ApiKey"`
     ApiToken string `yaml:"ApiToken"`
+	AccountId string `yaml:"AccountId"`
 //    CADirUrl  string `yaml:"CA_DIR_URL"`
     Email     string `yaml:"Email"`
 	YamlFile	string
@@ -74,11 +75,11 @@ func PrintZones(zones []cloudflare.Zone) {
 func PrintApiObj (apiObj *ApiObj) {
 
     fmt.Println("********** Api Obj ************")
-    fmt.Printf("API:      %s\n", apiObj.Api)
-    fmt.Printf("APIKey:   %s\n", apiObj.ApiKey)
-    fmt.Printf("APIToken: %s\n", apiObj.ApiToken)
-//    fmt.Printf("Ca Dir Url: %s\n", nchObj.CADirUrl)
-    fmt.Printf("Email:    %s\n", apiObj.Email)
+    fmt.Printf("API:       %s\n", apiObj.Api)
+    fmt.Printf("APIKey:    %s\n", apiObj.ApiKey)
+    fmt.Printf("APIToken:  %s\n", apiObj.ApiToken)
+    fmt.Printf("AccountId: %s\n", apiObj.AccountId)
+    fmt.Printf("Email:     %s\n", apiObj.Email)
     fmt.Println("*******************************")
 }
 
