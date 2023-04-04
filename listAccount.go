@@ -65,9 +65,11 @@ func main() {
 			log.Fatalf("error parseFlags: %v\n",err)
     	}
 
-		fmt.Printf("** flagMap: %d **\n", len(flagMap))
-		for k,v := range flagMap {
-			fmt.Printf("k: %v val: %v\n", k, v)
+		if dbg {
+			fmt.Printf("** flagMap: %d **\n", len(flagMap))
+			for k,v := range flagMap {
+				fmt.Printf("k: %v val: %v\n", k, v)
+			}
 		}
 
 		val, ok := flagMap["yaml"]
@@ -83,36 +85,12 @@ func main() {
 
     log.Printf("Using yaml apifile:    %s\n", cfApiFilNam)
 
-/*
-	// create yamlDomainFile
-	yaml.DmainFilNam := 
-	if _, err := os.Stat(yamlDomainFilNam); err != nil {
-		log.Printf("no existing domain file: %v!", err)
-	} else {
-		log.Printf("removing existing domain file!")
-     	e := os.Remove(yamlDomainFilNam)
-    	if e != nil {
-        	log.Fatal("could not remove file %s: %v", yamlDomainFilNam, e)
-    	}
-	}
-
-	yamlDomainFil, err := os.Create(yamlDomainFilNam)
-	if err != nil {
-        log.Fatal("could not create file %s: %v", yamlDomainFilNam, err)
-	}
-	defer yamlDomainFil.Close()
-*/
-
     apiObj, err := cfLib.InitCfLib(cfApiFilNam)
     if err != nil {
         log.Fatalf("cfLib.InitCfLib: %v\n", err)
     }
     // print results
     if dbg {cfLib.PrintApiObj (apiObj)}
-
-	// Construct a new API object using a global API key
-//	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
-	// alternatively, you can use a scoped API token
 
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {
@@ -136,37 +114,8 @@ func main() {
 		log.Fatalf("api.Account: %v\n", err)
 	}
 
-	fmt.Printf("account: %v\n", acnt)
+//	fmt.Printf("account: %v\n", acnt)
 
-/*
-//	acnts, resInfo, err := api.Accounts(ctx, par)
-	acnts, _, err := api.Accounts(ctx, par)
-	if err != nil {
-		log.Fatalf("api.Accounts: %v\n", err)
-	}
+	cfLib.PrintAccount(&acnt)
 
-	fmt.Printf("accounts: %d\n", len(acnts))
-*/
-
-
-/*
-	// todo: support for full or partial
-	zoneType := "partial"
-
-	// todo check whether domain is registered with namecheap
-	zoneNam := domainStr
-	zone, err :=api.CreateZone(ctx, zoneNam,
-/*
-	zones, err := api.ListZones(ctx)
-    if err != nil {
-        log.Fatalf("api.ListDNSRecords: %v\n", err)
-    }
-
-	cfLib.PrintZones(zones)
-
-	err = cfLib.SaveZones(zones, yamlDomainFil)
-    if err != nil {
-        log.Fatalf("cfLib.SaveZones: %v\n", err)
-    }
-*/
 }
