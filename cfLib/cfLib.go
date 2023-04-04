@@ -8,6 +8,7 @@ package cfLib
 import (
 	"fmt"
 	"os"
+	"time"
 
     yaml "github.com/goccy/go-yaml"
     "github.com/cloudflare/cloudflare-go"
@@ -137,4 +138,15 @@ func PrintDnsRec(recs *[]cloudflare.DNSRecord) {
     for i:=0; i< len(*recs); i++ {
         fmt.Printf("Record[%d]: %-3s %s %s %s\n", i, (*recs)[i].Type, (*recs)[i].Name, (*recs)[i].Content, (*recs)[i].ID)
     }
+}
+
+func PrintAccount(act *cloudflare.Account) {
+
+	fmt.Println("****** Account Info *****")
+	fmt.Printf("Id:    %s\n", act.ID)
+	fmt.Printf("Name: %s\n", act.Name)
+	fmt.Printf("Type: %s\n", act.Type)
+	t := act.CreatedOn
+	fmt.Printf("CreatedOn: %s\n", t.Format(time.RFC1123))
+	fmt.Printf("2Fa: %t\n",act.Settings.EnforceTwoFactor)
 }
