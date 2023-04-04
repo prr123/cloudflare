@@ -1,0 +1,7 @@
+---
+Api: "cloudflare"
+ApiKey: "your Api Key"
+AccountId: "your account id"
+ApiToken: "your api token"
+Email: "your cloudflare email (used as cloudflare user id)"
+
