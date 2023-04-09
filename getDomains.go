@@ -15,64 +15,90 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-    if numArgs < 1 {
-        fmt.Printf("usage: getDomains [domainfile] [/yaml=apifile]\n")
-        log.Fatalf("insufficient CLI args!\n")
-    }
-	if numArgs > 3 {
-        fmt.Printf("usage: getDomains [domainfile] [/yaml=apifile]\n")
+	useStr := "usage: getDomains [domainfile] [/save=json/yaml] [/api=apifile]"
+
+	if numArgs > 4 {
+		fmt.Println(useStr)
         log.Fatalf("too many CLI args!\n")
     }
 
 //	domain := os.Args[1]
-    yamlFilNam := "cloudflareApi.yaml"
-	yamlDomainFilNam := "cfDomains.yaml"
+    yamlApiFilNam := "cloudflareApi.yaml"
+	DomainFilNam := "cfDomains"
 
-    if numArgs > 1 {
+	flags := []string{"api","save"}
+	flagMap, err := util.ParseFlags(os.Args, flags)
+	if err != nil {
+		log.Fatalf("error parseFlags: %v\n",err)
+    }
 
-		flags := []string{"yaml"}
-		flagMap, err := util.ParseFlags(os.Args, flags)
-		if err != nil {
-			log.Fatalf("error parseFlags: %v\n",err)
-    	}
+	numFlags := len(flagMap)
 
-		val, ok := flagMap["yaml"]
-		if ok {
-			yamlFilNamStr, ok2 := val.(string)
-			if !ok2 {
-				log.Fatalf("no yaml file value not a string!")
-			} else {
-				yamlFilNam = yamlFilNamStr
-			}
-			if numArgs == 3 {
-				yamlDomainFilNam = os.Args[1]
-			}
-		} else {
-			yamlDomainFilNam = os.Args[1]
+	if numArgs > numFlags + 2 {
+		fmt.Println(useStr)
+		log.Fatalf("error more than one cmd: %v\n",err)
+	}
+
+	if numArgs == numFlags +2 {
+		DomainFilNam = os.Args[1]
+		if os.Args[1] == "help" {
+			fmt.Println(useStr)
+			os.Exit(-1)
 		}
 	}
 
-    log.Printf("Using yaml apifile:    %s\n", yamlFilNam)
-    log.Printf("Using yaml domainfile: %s\n", yamlDomainFilNam)
+	domainExt := ".yaml"
+	jsonTyp := false
+	if numFlags >0 {
+		val, ok := flagMap["api"]
+		if ok {
+			yamlFilNamStr, ok2 := val.(string)
+			if !ok2 {
+				log.Fatalf("api flag value is not a string!")
+			}
+			yamlApiFilNam = yamlFilNamStr
+		}
+		saveVal, ok := flagMap["save"]
+		if ok {
+			saveStr, ok2 := saveVal.(string)
+			if !ok2 {
+				log.Fatalf("save flag value is not a string!")
+			}
+
+			switch saveStr {
+			case "yaml":
+				domainExt = ".yaml"
+			case "json":
+				domainExt = ".json"
+				jsonTyp =true
+			default:
+				log.Fatalf("invalid save flag:!", saveStr)
+			}
+		}
+	}
+
+	DomainFilNam = DomainFilNam + domainExt
+    log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
+    log.Printf("Using yaml domainfile: %s\n", DomainFilNam)
 
 	// create yamlDomainFile
-	if _, err := os.Stat(yamlDomainFilNam); err != nil {
+	if _, err := os.Stat(DomainFilNam); err != nil {
 		log.Printf("no existing domain file: %v!", err)
 	} else {
 		log.Printf("removing existing domain file!")
-     	e := os.Remove(yamlDomainFilNam)
+     	e := os.Remove(DomainFilNam)
     	if e != nil {
-        	log.Fatal("could not remove file %s: %v", yamlDomainFilNam, e)
+        	log.Fatal("could not remove file %s: %v", DomainFilNam, e)
     	}
 	}
 
-	yamlDomainFil, err := os.Create(yamlDomainFilNam)
+	DomainFil, err := os.Create(DomainFilNam)
 	if err != nil {
-        log.Fatal("could not create file %s: %v", yamlDomainFilNam, err)
+        log.Fatal("could not create file %s: %v", DomainFilNam, err)
 	}
-	defer yamlDomainFil.Close()
+	defer DomainFil.Close()
 
-    apiObj, err := cfLib.InitCfLib(yamlFilNam)
+    apiObj, err := cfLib.InitCfLib(yamlApiFilNam)
     if err != nil {
         log.Fatalf("cfLib.InitCfLib: %v\n", err)
     }
@@ -100,10 +126,15 @@ func main() {
 
 	cfLib.PrintZones(zones)
 
-	err = cfLib.SaveZones(zones, yamlDomainFil)
-    if err != nil {
-        log.Fatalf("cfLib.SaveZones: %v\n", err)
-    }
-
+	if jsonTyp {
+		err = cfLib.SaveZonesJson(zones, DomainFil)
+    	if err != nil {
+        	log.Fatalf("cfLib.SaveZonesJson: %v\n", err)
+    	}
+	} else {
+		err = cfLib.SaveZonesYaml(zones, DomainFil)
+    	if err != nil {
+        	log.Fatalf("cfLib.SaveZonesYaml: %v\n", err)
+    	}
+	}
 }
-
