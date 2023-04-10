@@ -15,7 +15,7 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-	useStr := "usage: getDomains [domainfile] [/save=json/yaml] [/api=apifile]"
+	useStr := "usage: listDomains [domainfile] [/save=json/yaml] [/api=apifile]"
 
 	if numArgs > 4 {
 		fmt.Println(useStr)
@@ -24,7 +24,7 @@ func main() {
 
 //	domain := os.Args[1]
     yamlApiFilNam := "cloudflareApi.yaml"
-	DomainFilNam := "cfDomains"
+	DomainFilNam := "cfDomainsLong"
 
 	flags := []string{"api","save"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
