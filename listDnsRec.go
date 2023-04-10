@@ -15,17 +15,29 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-    if numArgs < 1 {
-        fmt.Printf("usage: listDnsRec [/yaml=file]\n")
+	useStr :=  "usage: listDnsRec domain [/yaml=file]\n"
+    DomainFilNam := "cfDomainsShort.yaml"
+
+    if numArgs < 2 {
+        fmt.Printf(useStr)
         log.Fatalf("insufficient CLI args!\n")
     }
-	if numArgs > 2 {
-        fmt.Printf("usage: listDnsRec [/yaml=file]\n")
+	if numArgs > 3 {
+        fmt.Printf(useStr)
         log.Fatalf("too many CLI args!\n")
     }
 
-//	domain := os.Args[1]
     yamlFilNam := "cloudflareApi.yaml"
+	domain := os.Args[1]
+
+	if len(domain) == 0 {
+        fmt.Printf(useStr)
+        log.Fatalf("no doman provided!\n")
+	}
+	if domain == "help" {
+        fmt.Printf(useStr)
+		os.Exit(1)
+	}
 
     if numArgs == 3 {
 
@@ -45,7 +57,9 @@ func main() {
 		}
 	}
 
+	log.Printf("Lookup DNS Records for domain: %s\n", domain)
     log.Printf("Using yaml file: %s\n", yamlFilNam)
+    log.Printf("Using yaml domainsfile: %s\n", DomainFilNam)
 
     apiObj, err := cfLib.InitCfLib(yamlFilNam)
     if err != nil {
@@ -68,16 +82,47 @@ func main() {
 
 	fmt.Println("********************************************")
 
-	// try to list DNS Parameters
+	//get Domain id file
+    if _, err := os.Stat(DomainFilNam); err != nil {
+        log.Fatalf("no existing domain file: %v!\n", err)
+    }
 
+    infil, err := os.Open(DomainFilNam)
+    if err != nil {
+        log.Fatal("could not open file %s: %v", DomainFilNam, err)
+    }
+
+    var zoneShortList *[]cfLib.ZoneShort
+
+	zoneShortList, err = cfLib.ReadZonesShortYaml(infil)
+	if err != nil {
+		log.Fatalf("cfLib.ReadZonesShortYaml: %v\n", err)
+	}
+
+	found := false
+	var IdStr string
+    for i:=0; i<len((*zoneShortList)); i++ {
+        zone := (*zoneShortList)[i]
+		if zone.Name == domain {
+			IdStr = zone.Id
+			found = true
+			break
+		}
+//        fmt.Printf("Zone[%d]: Name: %s Id: %s\n", i+1, zone.Name, zone.Id)
+    }
+	if !found {
+		log.Fatalf("domain: %s not found!\n", domain)
+	}
+
+	// try to list DNS Parameters
 	var listDns cloudflare.ListDNSRecordsParams
-//	listDns.Name = domain
 
 	var rc cloudflare.ResourceContainer
 	rc.Level = cloudflare.ZoneRouteLevel
-	rc.Identifier = "0e6e30d5edb4c1025817eb1678511cef"
+//	rc.Identifier = "0e6e30d5edb4c1025817eb1678511cef"
+	rc.Identifier = IdStr
 
-	dnsRecs, resInfo, err := api.ListDNSRecords(ctx,&rc , listDns)
+	dnsRecs, resInfo, err := api.ListDNSRecords(ctx, &rc, listDns)
     if err != nil {
         log.Fatalf("api.ListDNSRecords: %v\n", err)
     }
@@ -85,7 +130,7 @@ func main() {
 //	fmt.Printf("Dns Records [%d]\n",len(dnsRecs))
 
 	cfLib.PrintResInfo(resInfo)
-	cfLib.PrintDnsRec(&dnsRecs)
+	cfLib.PrintDnsRecs(&dnsRecs)
 
 }
 
