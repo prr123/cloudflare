@@ -26,6 +26,16 @@ type ApiObj struct {
 	YamlFile	string
 }
 
+type ZoneShort struct {
+	Name string `yaml:"Name"`
+	Id string `yaml:"Id"`
+}
+
+type ZoneShortJson struct {
+	Name string `json:"Name"`
+	Id string `json:"Id"`
+}
+
 func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	var apiObj ApiObj
 
@@ -50,14 +60,26 @@ func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	return &apiObj, nil
 }
 
-func SaveZones(zones []cloudflare.Zone, outfil *os.File)(err error) {
+func SaveZonesJson(zones []cloudflare.Zone, outfil *os.File)(err error) {
 
 	if outfil == nil { return fmt.Errorf("no file provided!")}
-	jsdata, err := json.Marshal(zones)
-	if err != nil {return fmt.Errorf("could not convertZone: %v", err)}
 
-	_, err = outfil.Write(jsdata)
-	if err != nil {return fmt.Errorf("jsdata os.Write: %v", err)}
+	jsonData, err := json.Marshal(zones)
+	if err != nil {return fmt.Errorf("json.Marshal: %v", err)}
+
+	_, err = outfil.Write(jsonData)
+	if err != nil {return fmt.Errorf("jsonData os.Write: %v", err)}
+	return nil
+}
+
+func SaveZonesYaml(zones []cloudflare.Zone, outfil *os.File)(err error) {
+
+	if outfil == nil { return fmt.Errorf("no file provided!")}
+	yamlData, err := yaml.Marshal(zones)
+	if err != nil {return fmt.Errorf("yaml.Marshal: %v", err)}
+
+	_, err = outfil.Write(yamlData)
+	if err != nil {return fmt.Errorf("yamlData os.Write: %v", err)}
 	return nil
 }
 
@@ -132,12 +154,17 @@ func PrintResInfo(res *cloudflare.ResultInfo) {
     fmt.Println("********** End ResultInfo **************")
 }
 
-func PrintDnsRec(recs *[]cloudflare.DNSRecord) {
-    fmt.Printf("************* DNS Recourds: %d ************\n", len(*recs))
+func PrintDnsRecs(recs *[]cloudflare.DNSRecord) {
+    fmt.Printf("************* DNS Records: %d ************\n", len(*recs))
     fmt.Println("number  type      name             value/ content            Id")
     for i:=0; i< len(*recs); i++ {
         fmt.Printf("Record[%d]: %-3s %s %s %s\n", i, (*recs)[i].Type, (*recs)[i].Name, (*recs)[i].Content, (*recs)[i].ID)
     }
+}
+
+func PrintDnsRec(rec *cloudflare.DNSRecord) {
+    fmt.Printf("************* DNS Record ************\n")
+	fmt.Printf("Type: %-3s Name: %s Value: %s Id: %s\n", rec.Type, rec.Name, rec.Content, rec.ID)
 }
 
 func PrintAccount(act *cloudflare.Account) {
