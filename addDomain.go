@@ -107,11 +107,13 @@ func main() {
 	// todo store account id in api 
 
 	// todo: support for full or partial
-	zoneType := "partial"
+	zoneTyp := "partial"
+	jump := true
+	
 
 	// todo check whether domain is registered with namecheap
 	zoneNam := domainStr
-	zone, err :=api.CreateZone(ctx, zoneNam,
+	zone, err :=api.CreateZone(ctx, domain, jump, act, zoneTyp)
 /*
 	zones, err := api.ListZones(ctx)
     if err != nil {
