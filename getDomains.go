@@ -24,7 +24,7 @@ func main() {
 
 //	domain := os.Args[1]
     yamlApiFilNam := "cloudflareApi.yaml"
-	DomainFilNam := "cfDomains"
+	DomainFilNam := "cfDomainsShort"
 
 	flags := []string{"api","save"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
@@ -126,15 +126,25 @@ func main() {
 
 	cfLib.PrintZones(zones)
 
+	zoneShortList := make([]cfLib.ZoneShort, len(zones))
+
+
+	for i:=0; i< len(zones); i++ {
+		zoneShortList[i].Name =zones[i].Name
+		zoneShortList[i].Id =zones[i].ID
+	}
+
 	if jsonTyp {
-		err = cfLib.SaveZonesJson(zones, DomainFil)
+//		log.Fatal("json read: still todo\n")
+		err = cfLib.SaveZonesShortJson(zoneShortList, DomainFil)
     	if err != nil {
-        	log.Fatalf("cfLib.SaveZonesJson: %v\n", err)
+        	log.Fatalf("cfLib.SaveZonesShortJson: %v\n", err)
     	}
+
 	} else {
-		err = cfLib.SaveZonesYaml(zones, DomainFil)
+		err = cfLib.SaveZonesShortYaml(zoneShortList, DomainFil)
     	if err != nil {
-        	log.Fatalf("cfLib.SaveZonesYaml: %v\n", err)
+        	log.Fatalf("cfLib.SaveZonesShortYaml: %v\n", err)
     	}
 	}
 }
