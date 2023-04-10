@@ -83,6 +83,57 @@ func SaveZonesYaml(zones []cloudflare.Zone, outfil *os.File)(err error) {
 	return nil
 }
 
+func SaveZonesShortJson(zones []ZoneShort, outfil *os.File)(err error) {
+
+	if outfil == nil { return fmt.Errorf("no file provided!")}
+
+	jsonData, err := json.Marshal(zones)
+	if err != nil {return fmt.Errorf("json.Marshal: %v", err)}
+
+	_, err = outfil.Write(jsonData)
+	if err != nil {return fmt.Errorf("jsonData os.Write: %v", err)}
+	return nil
+}
+
+func SaveZonesShortYaml(zones []ZoneShort, outfil *os.File)(err error) {
+
+	if outfil == nil { return fmt.Errorf("no file provided!")}
+
+	yamlData, err := yaml.Marshal(zones)
+	if err != nil {return fmt.Errorf("yaml.Marshal: %v", err)}
+
+	_, err = outfil.WriteString("---\n")
+	if err != nil {return fmt.Errorf("yamlData os.WriteString: %v", err)}
+
+	_, err = outfil.Write(yamlData)
+	if err != nil {return fmt.Errorf("yamlData os.Write: %v", err)}
+	return nil
+}
+
+func ReadZonesShortYaml(infil *os.File)(zoneListObj *[]ZoneShort, err error) {
+
+	var zonesShort []ZoneShort
+
+	if infil == nil { return nil, fmt.Errorf("no file provided!")}
+
+	info, err := infil.Stat()
+	if err != nil {return nil, fmt.Errorf("info.Stat: %v", err)}
+
+	size := info.Size()
+
+	inBuf := make([]byte, int(size))
+
+	_, err = infil.Read(inBuf)
+	if err != nil {return nil, fmt.Errorf("infil.Read: %v", err)}
+
+	err = yaml.Unmarshal(inBuf, &zonesShort)
+	if err != nil {return nil, fmt.Errorf("yaml.Unmarshal: %v", err)}
+
+	return &zonesShort, nil
+}
+
+
+
 func PrintZones(zones []cloudflare.Zone) {
 
     fmt.Printf("************** Zones/Domains [%d] *************\n", len(zones))
