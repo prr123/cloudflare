@@ -1,7 +1,7 @@
-// delDnsRec.go
-// test program to delete a dns record from a domain/ zone
+// delAcmeRec.go
+// test program that deletes an acme challenge record from a domain/ zone
 // Author: prr, azulsoftware
-// Date: 31 March 2023
+// Date: 11 April 2023
 // copyright 2023 prr, azul software
 //
 
@@ -23,37 +23,49 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-    if numArgs < 1 {
-        fmt.Printf("usage: addDnsRec [/yaml=file]\n")
-        log.Fatalf("insufficient CLI args!\n")
+
+	useStr:= "delAcmeRec domain [/acme=domain][/api=file]\n"
+    if numArgs < 2 {
+        fmt.Println(useStr)
+        log.Fatalf("insufficient CLI args! Need to specify a domain!\n")
     }
-	if numArgs > 2 {
-        fmt.Printf("usage: addDnsRec [/yaml=file]\n")
+	if numArgs > 4 {
+        fmt.Println(useStr)
         log.Fatalf("too many CLI args!\n")
     }
 
-//	domain := os.Args[1]
+	domain := os.Args[1]
+
     yamlFilNam := "cloudflareApi.yaml"
+	acmeFilNam := "cfDomainsAcme.yaml"
 
-    if numArgs == 2 {
+    if numArgs > 2 {
 
-		flags := []string{"yaml"}
+		flags := []string{"api, acme"}
 		flagMap, err := util.ParseFlags(os.Args, flags)
 		if err != nil {
 			log.Fatalf("error parseFlags: %v\n",err)
     	}
 
-		val, ok := flagMap["yaml"]
-		if !ok {
-			log.Fatalf("no yaml file specified!")
+		val, ok := flagMap["api"]
+		if ok {
+			yamlFilNam, ok = val.(string)
+			if !ok {
+				log.Fatalf("api file value not a string!")
+			}
 		}
-		yamlFilNam, ok = val.(string)
-		if !ok {
-			log.Fatalf("no yaml file value not a string!")
+		val, ok = flagMap["acme"]
+		if ok {
+			acmeFilNam, ok = val.(string)
+			if !ok {
+				log.Fatalf("acme file value not a string!")
+			}
 		}
 	}
 
-    log.Printf("Using yaml file: %s\n", yamlFilNam)
+	log.Printf("domain: %s\n", domain)
+    log.Printf("Using acme file: %s\n", acmeFilNam)
+    log.Printf("Using api file: %s\n", yamlFilNam)
 
     apiObj, err := cfLib.InitCfLib(yamlFilNam)
     if err != nil {
@@ -74,8 +86,31 @@ func main() {
 	// Most API calls require a Context
 	ctx := context.Background()
 
-	fmt.Println("************** delDnsRec *********************")
+	// reading acme file
+	zoneList, err := cfLib.ReadAcmeZones(acmeFilNam)
+	if err != nil {
+		log.Fatalf("api init: %v/n", err)
+	}
 
+	fmt.Printf("zones: %d\n", len(*zoneList))
+
+	found := -1
+	for i:=0; i< len(*zoneList); i++ {
+		if (*zoneList)[i].Name == domain {
+			found = i
+			break
+		}
+	}
+	if found == -1 {
+		log.Fatalf("domain % not found in zoneList!/n", domain)
+	}
+
+	log.Printf("domain: %s\n", (*zoneList)[found].Name)
+	log.Printf("Zone Id: %s\n", (*zoneList)[found].Id)
+	log.Printf("Acme Rec Id: %s\n", (*zoneList)[found].AcmeId)
+	os.Exit(0)
+
+	fmt.Println("************** delDnsRec *********************")
 
 	dnsRecId := "b12cd8fae338120e4aced6378fa8d5e5"
 
