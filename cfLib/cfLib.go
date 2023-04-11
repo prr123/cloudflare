@@ -31,6 +31,12 @@ type ZoneShort struct {
 	Id string `yaml:"Id"`
 }
 
+type ZoneAcmeShort struct {
+	Name string `yaml:"Name"`
+	Id string `yaml:"Id"`
+	AcmeId string `yaml:"AcmeId"`
+}
+
 type ZoneShortJson struct {
 	Name string `json:"Name"`
 	Id string `json:"Id"`
@@ -96,6 +102,21 @@ func SaveZonesShortJson(zones []ZoneShort, outfil *os.File)(err error) {
 }
 
 func SaveZonesShortYaml(zones []ZoneShort, outfil *os.File)(err error) {
+
+	if outfil == nil { return fmt.Errorf("no file provided!")}
+
+	yamlData, err := yaml.Marshal(zones)
+	if err != nil {return fmt.Errorf("yaml.Marshal: %v", err)}
+
+	_, err = outfil.WriteString("---\n")
+	if err != nil {return fmt.Errorf("yamlData os.WriteString: %v", err)}
+
+	_, err = outfil.Write(yamlData)
+	if err != nil {return fmt.Errorf("yamlData os.Write: %v", err)}
+	return nil
+}
+
+func SaveAcmeDns(zones []ZoneAcmeShort, outfil *os.File)(err error) {
 
 	if outfil == nil { return fmt.Errorf("no file provided!")}
 
