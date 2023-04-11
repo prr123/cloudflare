@@ -108,28 +108,26 @@ func main() {
 	log.Printf("domain: %s\n", (*zoneList)[found].Name)
 	log.Printf("Zone Id: %s\n", (*zoneList)[found].Id)
 	log.Printf("Acme Rec Id: %s\n", (*zoneList)[found].AcmeId)
-	os.Exit(0)
+//	os.Exit(0)
 
 	fmt.Println("************** delDnsRec *********************")
 
-	dnsRecId := "b12cd8fae338120e4aced6378fa8d5e5"
+//	dnsRecId := "b12cd8fae338120e4aced6378fa8d5e5"
+	dnsRecId := (*zoneList)[found].AcmeId
 
 	var rc cloudflare.ResourceContainer
 	//domains
 	rc.Level = cloudflare.ZoneRouteLevel
 	//domain id
-	rc.Identifier = "0e6e30d5edb4c1025817eb1678511cef"
+//	rc.Identifier = "0e6e30d5edb4c1025817eb1678511cef"
+	rc.Identifier = (*zoneList)[found].Id
 
 	err = api.DeleteDNSRecord(ctx, &rc, dnsRecId)
     if err != nil {
         log.Fatalf("api.DeleteDNSRecord: %v\n", err)
     }
 
-	fmt.Println("Success Delete Dns Record")
-
-//	cfLib.PrintResInfo(resInfo)
-//	fmt.Println("************** after *********************")
-//	cfLib.PrintDnsRec(&dnsRecs)
+	fmt.Println("Success Deleting Acme Dns Record")
 
 }
 
