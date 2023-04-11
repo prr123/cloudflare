@@ -1,3 +1,10 @@
+// listDomains.go
+// program that lists all domains in cloudflare and save the domain name in a yaml file
+// Author: prr azul software
+// Date 10 April 2023
+// copyright prr azul software
+//
+
 package main
 
 import (
