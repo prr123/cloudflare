@@ -31,7 +31,7 @@ type ZoneShort struct {
 	Id string `yaml:"Id"`
 }
 
-type ZoneAcmeShort struct {
+type ZoneAcme struct {
 	Name string `yaml:"Name"`
 	Id string `yaml:"Id"`
 	AcmeId string `yaml:"AcmeId"`
@@ -116,7 +116,7 @@ func SaveZonesShortYaml(zones []ZoneShort, outfil *os.File)(err error) {
 	return nil
 }
 
-func SaveAcmeDns(zones []ZoneAcmeShort, outfil *os.File)(err error) {
+func SaveAcmeDns(zones []ZoneAcme, outfil *os.File)(err error) {
 
 	if outfil == nil { return fmt.Errorf("no file provided!")}
 
@@ -151,6 +151,31 @@ func ReadZonesShortYaml(infil *os.File)(zoneListObj *[]ZoneShort, err error) {
 	if err != nil {return nil, fmt.Errorf("yaml.Unmarshal: %v", err)}
 
 	return &zonesShort, nil
+}
+
+// read acme file
+func ReadAcmeZones(inFilNam string)(zoneListObj *[]ZoneAcme, err error) {
+
+	var zones []ZoneAcme
+
+//	if infil == nil { return nil, fmt.Errorf("no file provided!")}
+
+/*
+	info, err := os.Stat(infilNam)
+	if err != nil {return nil, fmt.Errorf("info.Stat: %v", err)}
+
+
+	size := info.Size()
+	inBuf := make([]byte, int(size))
+*/
+
+	inBuf, err := os.ReadFile(inFilNam)
+	if err != nil {return nil, fmt.Errorf("os.ReadFile: %v", err)}
+
+	err = yaml.Unmarshal(inBuf, &zones)
+	if err != nil {return nil, fmt.Errorf("yaml.Unmarshal: %v", err)}
+
+	return &zones, nil
 }
 
 
