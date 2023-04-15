@@ -102,7 +102,7 @@ func main() {
 		}
 	}
 	if found == -1 {
-		log.Fatalf("domain % not found in zoneList!/n", domain)
+		log.Fatalf("domain %s not found in zoneList!\n", domain)
 	}
 
 	log.Printf("domain: %s\n", (*zoneList)[found].Name)
