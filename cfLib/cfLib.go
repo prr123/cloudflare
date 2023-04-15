@@ -194,13 +194,13 @@ func PrintZones(zones []cloudflare.Zone) {
 
 func PrintApiObj (apiObj *ApiObj) {
 
-    fmt.Println("********** Api Obj ************")
+    fmt.Println("***************** Api Obj ******************")
     fmt.Printf("API:       %s\n", apiObj.Api)
     fmt.Printf("APIKey:    %s\n", apiObj.ApiKey)
     fmt.Printf("APIToken:  %s\n", apiObj.ApiToken)
     fmt.Printf("AccountId: %s\n", apiObj.AccountId)
     fmt.Printf("Email:     %s\n", apiObj.Email)
-    fmt.Println("*******************************")
+    fmt.Println("********************************************")
 }
 
 // https://github.com/cloudflare/cloudflare-go/blob/0d05fc09483641dde8abb4c64cf2f6016f590d79/user.go#L12
@@ -252,16 +252,28 @@ func PrintResInfo(res *cloudflare.ResultInfo) {
 }
 
 func PrintDnsRecs(recs *[]cloudflare.DNSRecord) {
-    fmt.Printf("************* DNS Records: %d ************\n", len(*recs))
-    fmt.Println("number  type      name             value/ content            Id")
+    fmt.Printf("************** DNS Records: %d *************\n", len(*recs))
+    fmt.Println("number           ID          type      name             value/ content")
     for i:=0; i< len(*recs); i++ {
-        fmt.Printf("Record[%d]: %-3s %s %s %s\n", i, (*recs)[i].Type, (*recs)[i].Name, (*recs)[i].Content, (*recs)[i].ID)
+		rec := (*recs)[i]
+        fmt.Printf("Record[%d]: %-15s %-3s %s %s\n", i+1, rec.ID, rec.Type, rec.Name, rec.Content)
     }
+    fmt.Printf("************** End DNS Records **************\n")
 }
 
 func PrintDnsRec(rec *cloudflare.DNSRecord) {
-    fmt.Printf("************* DNS Record ************\n")
-	fmt.Printf("Type: %-3s Name: %s Value: %s Id: %s\n", rec.Type, rec.Name, rec.Content, rec.ID)
+    fmt.Printf("************* DNS Record  ***************\n", )
+	fmt.Printf("ID: %s Type: %-3s Name: %s Value: %s\n", rec.ID, rec.Type, rec.Name, rec.Content)
+    fmt.Printf("************* End DNS Record ************\n")
+}
+
+func PrintAcmeZones(zones []ZoneAcme) {
+	fmt.Printf("*********** Acme Zones: %d ***************\n", len(zones))
+	for i:=0; i< len(zones); i++ {
+		zone := zones[i]
+		fmt.Printf("Zone [%d] Id: %s Name: %s Acme Record Id: %s\n", i+1, zone.Id, zone.Name, zone.AcmeId)
+	}
+	fmt.Printf("*********** End Acme Zones ***************\n")
 }
 
 func PrintAccount(act *cloudflare.Account) {
