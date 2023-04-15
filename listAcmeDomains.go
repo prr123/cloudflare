@@ -77,25 +77,30 @@ func main() {
 
 	AcmeDomainFilNam = AcmeDomainFilNam + domainExt
     log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
-    log.Printf("Using yaml domainfile: %s\n", AcmeDomainFilNam)
+	if saveFlag {
+	    log.Printf("Using yaml domainfile: %s\n", AcmeDomainFilNam)
+	}
     log.Printf("Using saveFlag: %t\n", saveFlag)
 
-	// create yamlDomainFile
-	if _, err := os.Stat(AcmeDomainFilNam); err != nil {
-		log.Printf("no existing domain file: %v!", err)
-	} else {
-		log.Printf("removing existing domain file!")
-     	e := os.Remove(AcmeDomainFilNam)
-    	if e != nil {
-        	log.Fatal("could not remove file %s: %v", AcmeDomainFilNam, e)
-    	}
-	}
 
-	DomainFil, err := os.Create(AcmeDomainFilNam)
-	if err != nil {
-        log.Fatal("could not create file %s: %v", AcmeDomainFilNam, err)
+	// create yamlDomainFile
+	if saveFlag {
+		if _, err := os.Stat(AcmeDomainFilNam); err != nil {
+			log.Printf("no existing domain file: %v!", err)
+		} else {
+			log.Printf("removing existing domain file!")
+     		e := os.Remove(AcmeDomainFilNam)
+    		if e != nil {
+        		log.Fatal("could not remove file %s: %v", AcmeDomainFilNam, e)
+    		}
+		}
+
+		DomainFil, err := os.Create(AcmeDomainFilNam)
+		if err != nil {
+        	log.Fatal("could not create file %s: %v", AcmeDomainFilNam, err)
+		}
+		defer DomainFil.Close()
 	}
-	defer DomainFil.Close()
 
     apiObj, err := cfLib.InitCfLib(yamlApiFilNam)
     if err != nil {
@@ -143,8 +148,9 @@ func main() {
 		dnsId := ""
 		for j:=0; j< len(dnsRecs); j++ {
 			idx := strings.Index(dnsRecs[j].Name, "_acme-challenge.")
+// dbg: fmt.Printf("rec [%d] name: %s idx %d\n", j, dnsRecs[j].Name, idx)
 			if idx == 0 {
-				dnsId = dnsRecs[i].ID
+				dnsId = dnsRecs[j].ID
 				break
 			}
 		}
