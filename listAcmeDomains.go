@@ -23,7 +23,7 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-	useStr := "usage: listAcmeDomains [domainfile] [/api=apifile]"
+	useStr := "usage: listAcmeDomains [domainfile] [/api=apifile] [/save]"
 
 	if numArgs > 3 {
 		fmt.Println(useStr)
@@ -34,13 +34,15 @@ func main() {
     yamlApiFilNam := "cloudflareApi.yaml"
 	AcmeDomainFilNam := "cfDomainsAcme"
 
-	flags := []string{"api"}
+	flags := []string{"api", "save"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
 	if err != nil {
 		log.Fatalf("error parseFlags: %v\n",err)
     }
 
 	numFlags := len(flagMap)
+	log.Printf("flags: %d\n", numFlags)
+	fmt.Printf("flagMap: %v\n", flagMap)
 
 	if numArgs > numFlags + 2 {
 		fmt.Println(useStr)
@@ -57,6 +59,7 @@ func main() {
 
 	domainExt := ".yaml"
 //	jsonTyp := false
+	saveFlag := false
 	if numFlags >0 {
 		val, ok := flagMap["api"]
 		if ok {
@@ -66,11 +69,16 @@ func main() {
 			}
 			yamlApiFilNam = yamlFilNamStr
 		}
+		val, ok = flagMap["save"]
+		if ok {
+			saveFlag = true
+		}
 	}
 
 	AcmeDomainFilNam = AcmeDomainFilNam + domainExt
     log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
     log.Printf("Using yaml domainfile: %s\n", AcmeDomainFilNam)
+    log.Printf("Using saveFlag: %t\n", saveFlag)
 
 	// create yamlDomainFile
 	if _, err := os.Stat(AcmeDomainFilNam); err != nil {
@@ -152,11 +160,13 @@ func main() {
 
 	cfLib.PrintAcmeZones(acmeZones[:count])
 
-	err = cfLib.SaveAcmeDns(acmeZones[:count], DomainFil)
-    if err != nil {
-       	log.Fatalf("cfLib.SaveZonesYaml: %v\n", err)
-    }
-
-
-	log.Printf("success creating Acme Domain File")
+	if saveFlag {
+		err = cfLib.SaveAcmeDns(acmeZones[:count], DomainFil)
+    	if err != nil {
+       		log.Fatalf("cfLib.SaveZonesYaml: %v\n", err)
+    	}
+		log.Printf("success listAcmeDomains created Acme Domain File")
+	} else {
+		log.Printf("success listAcmeDomains no Acme Domain File creation")
+	}
 }
