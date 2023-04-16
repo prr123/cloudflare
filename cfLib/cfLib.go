@@ -26,6 +26,14 @@ type ApiObj struct {
 	YamlFile	string
 }
 
+type ZoneList struct {
+	AccountId string `yaml:"AccountId"`
+	Email string `yaml:"Email"`
+	Modified string `yaml:"Modified"`
+	ModTime time.Time
+	Zones []ZoneShort `yaml:"Zones"`
+}
+
 type ZoneShort struct {
 	Name string `yaml:"Name"`
 	Id string `yaml:"Id"`
@@ -116,6 +124,21 @@ func SaveZonesShortYaml(zones []ZoneShort, outfil *os.File)(err error) {
 	return nil
 }
 
+func SaveZoneShortFile(zoneList *ZoneList, outfil *os.File)(err error) {
+
+	if outfil == nil { return fmt.Errorf("no file provided!")}
+
+	yamlData, err := yaml.Marshal(zoneList)
+	if err != nil {return fmt.Errorf("yaml.Marshal: %v", err)}
+
+	_, err = outfil.WriteString("---\n")
+	if err != nil {return fmt.Errorf("yamlData os.WriteString: %v", err)}
+
+	_, err = outfil.Write(yamlData)
+	if err != nil {return fmt.Errorf("yamlData os.Write: %v", err)}
+	return nil
+}
+
 func SaveAcmeDns(zones []ZoneAcme, outfil *os.File)(err error) {
 
 	if outfil == nil { return fmt.Errorf("no file provided!")}
@@ -153,6 +176,7 @@ func ReadZonesShortYaml(infil *os.File)(zoneListObj *[]ZoneShort, err error) {
 	return &zonesShort, nil
 }
 
+
 // read acme file
 func ReadAcmeZones(inFilNam string)(zoneListObj *[]ZoneAcme, err error) {
 
@@ -187,6 +211,21 @@ func PrintZones(zones []cloudflare.Zone) {
     for i:=0; i< len(zones); i++ {
         zone := zones[i]
         fmt.Printf("%d %-20s %s\n",i+1, zone.Name, zone.ID)
+    }
+}
+
+func PrintZoneList(zoneList *ZoneList){
+
+    fmt.Printf("************** ZoneList *************\n")
+
+	fmt.Printf("AccountId: %s\n", zoneList.AccountId)
+	fmt.Printf("Email:     %s\n", zoneList.Email)
+	fmt.Printf("Modified:  %s\n", zoneList.ModTime.Format(time.RFC1123))
+	zonesLen := len((*zoneList).Zones)
+	fmt.Printf("*** Zones[%d]: ***\n", zonesLen)
+    for i:=0; i< zonesLen; i++ {
+        zone :=(* zoneList).Zones[i]
+        fmt.Printf("   %d %-20s %s\n",i+1, zone.Name, zone.Id)
     }
 }
 
