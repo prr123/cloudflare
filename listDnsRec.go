@@ -99,20 +99,20 @@ func main() {
 		log.Fatalf("cfLib.ReadZonesShortYaml: %v\n", err)
 	}
 
-	found := false
-	var IdStr string
+	found := -1
     for i:=0; i<len((*zoneShortList)); i++ {
         zone := (*zoneShortList)[i]
 		if zone.Name == domain {
-			IdStr = zone.Id
-			found = true
+			found = i
 			break
 		}
-//        fmt.Printf("Zone[%d]: Name: %s Id: %s\n", i+1, zone.Name, zone.Id)
     }
-	if !found {
+	if found < 0 {
 		log.Fatalf("domain: %s not found!\n", domain)
 	}
+
+	zone := (*zoneShortList)[found]
+	fmt.Printf("Zone[%d]: Name: %s Id: %s\n", found+1, zone.Name, zone.Id)
 
 	// try to list DNS Parameters
 	var listDns cloudflare.ListDNSRecordsParams
@@ -120,17 +120,17 @@ func main() {
 	var rc cloudflare.ResourceContainer
 	rc.Level = cloudflare.ZoneRouteLevel
 //	rc.Identifier = "0e6e30d5edb4c1025817eb1678511cef"
-	rc.Identifier = IdStr
+	rc.Identifier = zone.Id
 
-	dnsRecs, resInfo, err := api.ListDNSRecords(ctx, &rc, listDns)
+//	dnsRecs, resInfo, err := api.ListDNSRecords(ctx, &rc, listDns)
+	dnsRecs, _, err := api.ListDNSRecords(ctx, &rc, listDns)
     if err != nil {
         log.Fatalf("api.ListDNSRecords: %v\n", err)
     }
 //	fmt.Printf("resInfo: %v\n", resInfo)
 //	fmt.Printf("Dns Records [%d]\n",len(dnsRecs))
 
-	cfLib.PrintResInfo(resInfo)
+//	cfLib.PrintResInfo(resInfo)
 	cfLib.PrintDnsRecs(&dnsRecs)
-
 }
 
