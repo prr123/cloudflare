@@ -128,7 +128,7 @@ func main() {
 
 	zones, err := api.ListZones(ctx)
     if err != nil {
-        log.Fatalf("api.ListDNSRecords: %v\n", err)
+        log.Fatalf("api.ListZones: %v\n", err)
     }
 
 	cfLib.PrintZones(zones)
