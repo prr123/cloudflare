@@ -1,3 +1,10 @@
+// creDomainListShort
+// program that creates a yaml file of all zones/ domains in an account
+// Author: prr azul software
+// Date: 16 April 2023
+// copyright 2023 prr, azul software
+//
+
 package main
 
 import (
@@ -5,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
     util "github.com/prr123/utility/utilLib"
 //    yaml "github.com/goccy/go-yaml"
@@ -15,9 +23,10 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-	useStr := "usage: getDomains [domainfile] [/save=json/yaml] [/api=apifile]"
+	useStr := "usage: creDomainListShort [/save=domainfile] [/api=apifile]"
 
-	if numArgs > 4 {
+
+	if numArgs > 3 {
 		fmt.Println(useStr)
         log.Fatalf("too many CLI args!\n")
     }
@@ -26,7 +35,7 @@ func main() {
     yamlApiFilNam := "cloudflareApi.yaml"
 	DomainFilNam := "cfDomainsShort"
 
-	flags := []string{"api","save"}
+	flags := []string{"api", "save"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
 	if err != nil {
 		log.Fatalf("error parseFlags: %v\n",err)
@@ -36,45 +45,38 @@ func main() {
 
 	if numArgs > numFlags + 2 {
 		fmt.Println(useStr)
-		log.Fatalf("error more than one cmd: %v\n",err)
+		log.Fatalf("error unknown commands: %v\n", err)
 	}
 
-	if numArgs == numFlags +2 {
+	if numArgs == numFlags + 2 {
 		DomainFilNam = os.Args[1]
 		if os.Args[1] == "help" {
 			fmt.Println(useStr)
 			os.Exit(-1)
+		} else {
+			fmt.Println(useStr)
+			log.Fatalf("error unknown command: %s : %v\n", os.Args[1], err)
 		}
 	}
 
 	domainExt := ".yaml"
-	jsonTyp := false
-	if numFlags >0 {
-		val, ok := flagMap["api"]
-		if ok {
-			yamlFilNamStr, ok2 := val.(string)
-			if !ok2 {
-				log.Fatalf("api flag value is not a string!")
-			}
-			yamlApiFilNam = yamlFilNamStr
-		}
-		saveVal, ok := flagMap["save"]
-		if ok {
-			saveStr, ok2 := saveVal.(string)
-			if !ok2 {
-				log.Fatalf("save flag value is not a string!")
-			}
 
-			switch saveStr {
-			case "yaml":
-				domainExt = ".yaml"
-			case "json":
-				domainExt = ".json"
-				jsonTyp =true
-			default:
-				log.Fatalf("invalid save flag:!", saveStr)
-			}
+	val, ok := flagMap["api"]
+	if ok {
+		yamlFilNamStr, ok2 := val.(string)
+		if !ok2 {
+			log.Fatalf("api flag value is not a string!")
 		}
+		yamlApiFilNam = yamlFilNamStr
+	}
+
+	saveVal, ok := flagMap["save"]
+	if ok {
+		saveStr, ok2 := saveVal.(string)
+		if !ok2 {
+			log.Fatalf("save flag value is not a string!")
+		}
+		DomainFilNam = saveStr
 	}
 
 	DomainFilNam = DomainFilNam + domainExt
@@ -126,6 +128,7 @@ func main() {
 
 	cfLib.PrintZones(zones)
 
+
 	zoneShortList := make([]cfLib.ZoneShort, len(zones))
 
 
@@ -134,17 +137,22 @@ func main() {
 		zoneShortList[i].Id =zones[i].ID
 	}
 
-	if jsonTyp {
-//		log.Fatal("json read: still todo\n")
-		err = cfLib.SaveZonesShortJson(zoneShortList, DomainFil)
-    	if err != nil {
-        	log.Fatalf("cfLib.SaveZonesShortJson: %v\n", err)
-    	}
+	zoneList := &cfLib.ZoneList{
+			AccountId: apiObj.AccountId,
+			Email: apiObj.Email,
+			ModTime: time.Now(),
+			Zones: zoneShortList,
+		}
+	zoneList.Modified = zoneList.ModTime.Format(time.RFC1123)
 
-	} else {
-		err = cfLib.SaveZonesShortYaml(zoneShortList, DomainFil)
-    	if err != nil {
-        	log.Fatalf("cfLib.SaveZonesShortYaml: %v\n", err)
-    	}
-	}
+
+	cfLib.PrintZoneList(zoneList)
+
+//	os.Exit(1)
+
+	err = cfLib.SaveZoneShortFile(zoneList, DomainFil)
+    if err != nil {
+        log.Fatalf("cfLib.SaveZoneShortFile: %v\n", err)
+    }
+
 }
