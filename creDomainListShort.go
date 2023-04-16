@@ -1,0 +1,150 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+    util "github.com/prr123/utility/utilLib"
+//    yaml "github.com/goccy/go-yaml"
+	"ns/cloudflare/cfLib"
+	"github.com/cloudflare/cloudflare-go"
+)
+
+func main() {
+
+    numArgs := len(os.Args)
+	useStr := "usage: getDomains [domainfile] [/save=json/yaml] [/api=apifile]"
+
+	if numArgs > 4 {
+		fmt.Println(useStr)
+        log.Fatalf("too many CLI args!\n")
+    }
+
+//	domain := os.Args[1]
+    yamlApiFilNam := "cloudflareApi.yaml"
+	DomainFilNam := "cfDomainsShort"
+
+	flags := []string{"api","save"}
+	flagMap, err := util.ParseFlags(os.Args, flags)
+	if err != nil {
+		log.Fatalf("error parseFlags: %v\n",err)
+    }
+
+	numFlags := len(flagMap)
+
+	if numArgs > numFlags + 2 {
+		fmt.Println(useStr)
+		log.Fatalf("error more than one cmd: %v\n",err)
+	}
+
+	if numArgs == numFlags +2 {
+		DomainFilNam = os.Args[1]
+		if os.Args[1] == "help" {
+			fmt.Println(useStr)
+			os.Exit(-1)
+		}
+	}
+
+	domainExt := ".yaml"
+	jsonTyp := false
+	if numFlags >0 {
+		val, ok := flagMap["api"]
+		if ok {
+			yamlFilNamStr, ok2 := val.(string)
+			if !ok2 {
+				log.Fatalf("api flag value is not a string!")
+			}
+			yamlApiFilNam = yamlFilNamStr
+		}
+		saveVal, ok := flagMap["save"]
+		if ok {
+			saveStr, ok2 := saveVal.(string)
+			if !ok2 {
+				log.Fatalf("save flag value is not a string!")
+			}
+
+			switch saveStr {
+			case "yaml":
+				domainExt = ".yaml"
+			case "json":
+				domainExt = ".json"
+				jsonTyp =true
+			default:
+				log.Fatalf("invalid save flag:!", saveStr)
+			}
+		}
+	}
+
+	DomainFilNam = DomainFilNam + domainExt
+    log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
+    log.Printf("Using yaml domainfile: %s\n", DomainFilNam)
+
+	// create yamlDomainFile
+	if _, err := os.Stat(DomainFilNam); err != nil {
+		log.Printf("no existing domain file: %v!", err)
+	} else {
+		log.Printf("removing existing domain file!")
+     	e := os.Remove(DomainFilNam)
+    	if e != nil {
+        	log.Fatal("could not remove file %s: %v", DomainFilNam, e)
+    	}
+	}
+
+	DomainFil, err := os.Create(DomainFilNam)
+	if err != nil {
+        log.Fatal("could not create file %s: %v", DomainFilNam, err)
+	}
+	defer DomainFil.Close()
+
+    apiObj, err := cfLib.InitCfLib(yamlApiFilNam)
+    if err != nil {
+        log.Fatalf("cfLib.InitCfLib: %v\n", err)
+    }
+    // print results
+    cfLib.PrintApiObj (apiObj)
+
+	// Construct a new API object using a global API key
+//	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
+	// alternatively, you can use a scoped API token
+
+	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
+	if err != nil {
+		log.Fatalf("api init: %v/n", err)
+	}
+
+	// Most API calls require a Context
+	ctx := context.Background()
+
+	fmt.Println("********************************************")
+
+	zones, err := api.ListZones(ctx)
+    if err != nil {
+        log.Fatalf("api.ListDNSRecords: %v\n", err)
+    }
+
+	cfLib.PrintZones(zones)
+
+	zoneShortList := make([]cfLib.ZoneShort, len(zones))
+
+
+	for i:=0; i< len(zones); i++ {
+		zoneShortList[i].Name =zones[i].Name
+		zoneShortList[i].Id =zones[i].ID
+	}
+
+	if jsonTyp {
+//		log.Fatal("json read: still todo\n")
+		err = cfLib.SaveZonesShortJson(zoneShortList, DomainFil)
+    	if err != nil {
+        	log.Fatalf("cfLib.SaveZonesShortJson: %v\n", err)
+    	}
+
+	} else {
+		err = cfLib.SaveZonesShortYaml(zoneShortList, DomainFil)
+    	if err != nil {
+        	log.Fatalf("cfLib.SaveZonesShortYaml: %v\n", err)
+    	}
+	}
+}
