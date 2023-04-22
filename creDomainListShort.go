@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"time"
+	"path/filepath"
 
     util "github.com/prr123/utility/utilLib"
 //    yaml "github.com/goccy/go-yaml"
@@ -32,8 +33,8 @@ func main() {
     }
 
 //	domain := os.Args[1]
-    yamlApiFilNam := "cloudflareApi.yaml"
-	DomainFilNam := "cfDomainsShort"
+    yamlApiFilNam := "/home/peter/yaml/cloudflareApi.yaml"
+	DomainFilNam := "/home/peter/zones/cfDomainsShort"
 
 	flags := []string{"api", "save"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
@@ -83,6 +84,7 @@ func main() {
     log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
     log.Printf("Using yaml domainfile: %s\n", DomainFilNam)
 
+
 	// create yamlDomainFile
 	if _, err := os.Stat(DomainFilNam); err != nil {
 		log.Printf("no existing domain file: %v!", err)
@@ -90,13 +92,26 @@ func main() {
 		log.Printf("removing existing domain file!")
      	e := os.Remove(DomainFilNam)
     	if e != nil {
-        	log.Fatal("could not remove file %s: %v", DomainFilNam, e)
+        	log.Fatalf("could not remove file %s: %v", DomainFilNam, e)
     	}
+	}
+
+	// make sure zones folder exists
+	// todo
+	//
+	path, err := filepath.Abs(DomainFilNam)
+	if err != nil {
+		log.Fatalf("filepath error: %v", err)
+	}
+
+	_, err = os.Stat(filepath.Dir(path))
+	if err != nil {
+		log.Fatalf("folder %s err: %v: %v", filepath.Dir(path), err)
 	}
 
 	DomainFil, err := os.Create(DomainFilNam)
 	if err != nil {
-        log.Fatal("could not create file %s: %v", DomainFilNam, err)
+        log.Fatalf("could not create file %s: %v", DomainFilNam, err)
 	}
 	defer DomainFil.Close()
 
