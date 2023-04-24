@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"context"
 
     yaml "github.com/goccy/go-yaml"
     "github.com/cloudflare/cloudflare-go"
@@ -24,6 +25,10 @@ type ApiObj struct {
 //    CADirUrl  string `yaml:"CA_DIR_URL"`
     Email     string `yaml:"Email"`
 	YamlFile	string
+}
+
+type cfApi struct {
+	api *cloudflare.API
 }
 
 type ZoneList struct {
@@ -72,6 +77,100 @@ func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	apiObj.YamlFile = yamlFilNam
 
 	return &apiObj, nil
+}
+
+func InitCfApi(apifil string) (cfapi *cfApi, err error) {
+
+//	api := &cloudflare.API{}
+
+	yamlFilNam := "/home/peter/yaml/cloudflareApi.yaml"
+
+	apiObj, err := InitCfLib(yamlFilNam)
+    if err != nil {return nil, fmt.Errorf("cfLib.InitCfLib: %v\n", err)}
+
+    // print results
+//    cfLib.PrintApiObj (apiObj)
+
+	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
+	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v/n", err)}
+
+	cfapi.api = api
+
+	return cfapi, nil
+}
+
+
+// function that creates DNS Challenge record
+func (cfapi *cfApi) AddDnsChalRecord (zone ZoneShort, val string) (recId string, err error) {
+
+/*
+   yamlFilNam := "/home/peter/yaml/cloudflareApi.yaml"
+
+    apiObj, err := cfLib.InitCfLib(yamlFilNam)
+    if err != nil {
+        log.Fatalf("cfLib.InitCfLib: %v\n", err)
+    }
+    // print results
+    cfLib.PrintApiObj (apiObj)
+
+    api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
+    if err != nil {
+        log.Fatalf("api init: %v/n", err)
+    }
+*/
+    // Most API calls require a Context
+
+	if cfapi == nil {return "", fmt.Errorf("cfApi is nil!")}
+	if cfapi.api == nil {return "", fmt.Errorf("cfApi.api is nil!")}
+
+	api := cfapi.api
+
+    ctx := context.Background()
+
+    // try to create DNS Record
+    dnsPar := cloudflare.CreateDNSRecordParams{
+        CreatedOn: time.Now(),
+        Type: "TXT",
+        Name: "_acme-challenge",
+        Content: val,
+        TTL: 30000,
+        Comment: "acme challenge record",
+    }
+
+    var rc cloudflare.ResourceContainer
+    //domains
+    rc.Level = cloudflare.ZoneRouteLevel
+    //domain id == zone id
+//    rc.Identifier = "d122e58449ac644ef5d11c983e3ca7eb"
+    rc.Identifier = zone.Id
+
+    dnsRec, err := api.CreateDNSRecord(ctx, &rc, dnsPar)
+    if err != nil { return "", fmt.Errorf("cfApi.CreateDNSRecord: %v\n", err)
+    }
+
+	recId = dnsRec.ID
+
+    fmt.Printf("success creating Dns Record!\n")
+    PrintDnsRec(&dnsRec)
+
+    return recId, nil
+}
+
+func (cfapi *cfApi) DelDnsChalRecord (zone ZoneShort, recId string) (err error) {
+
+	api := cfapi.api
+
+    ctx := context.Background()
+
+    var rc cloudflare.ResourceContainer
+    //domains
+    rc.Level = cloudflare.ZoneRouteLevel
+    rc.Identifier = zone.Id
+
+	err = api.DeleteDNSRecord(ctx, &rc, recId)
+	if err != nil {return fmt.Errorf("DeleteDnsRecord: %v", err)}
+
+	return nil
 }
 
 func SaveZonesJson(zones []cloudflare.Zone, outfil *os.File)(err error) {
@@ -202,7 +301,19 @@ func ReadAcmeZones(inFilNam string)(zoneListObj *[]ZoneAcme, err error) {
 	return &zones, nil
 }
 
+func ReadZoneShortFile(inFilNam string)(zoneList *ZoneList, err error) {
 
+	var zonelist ZoneList
+
+	inBuf, err := os.ReadFile(inFilNam)
+	if err != nil {return nil, fmt.Errorf("os.ReadFile: %v", err)}
+
+	err = yaml.Unmarshal(inBuf, &zonelist)
+	if err != nil {return nil, fmt.Errorf("yaml.Unmarshal: %v", err)}
+
+	return &zonelist, nil
+
+}
 
 func PrintZones(zones []cloudflare.Zone) {
 
