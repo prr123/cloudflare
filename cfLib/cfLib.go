@@ -28,7 +28,7 @@ type ApiObj struct {
 }
 
 type cfApi struct {
-	api *cloudflare.API
+	API *cloudflare.API
 }
 
 type ZoneList struct {
@@ -94,9 +94,9 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v/n", err)}
 
-	cfapi.api = api
+	cfApiObj := &cfApi{API: api}
 
-	return cfapi, nil
+	return cfApiObj, nil
 }
 
 
@@ -121,9 +121,9 @@ func (cfapi *cfApi) AddDnsChalRecord (zone ZoneShort, val string) (recId string,
     // Most API calls require a Context
 
 	if cfapi == nil {return "", fmt.Errorf("cfApi is nil!")}
-	if cfapi.api == nil {return "", fmt.Errorf("cfApi.api is nil!")}
+	if cfapi.API == nil {return "", fmt.Errorf("cfApi.api is nil!")}
 
-	api := cfapi.api
+	api := cfapi.API
 
     ctx := context.Background()
 
@@ -158,7 +158,7 @@ func (cfapi *cfApi) AddDnsChalRecord (zone ZoneShort, val string) (recId string,
 
 func (cfapi *cfApi) DelDnsChalRecord (zone ZoneShort, recId string) (err error) {
 
-	api := cfapi.api
+	api := cfapi.API
 
     ctx := context.Background()
 
