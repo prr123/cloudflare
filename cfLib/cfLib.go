@@ -16,7 +16,6 @@ import (
 	json "github.com/goccy/go-json"
 )
 
-
 type ApiObj struct {
     Api    string `yaml:"Api"`
     ApiKey string `yaml:"ApiKey"`
@@ -54,6 +53,29 @@ type ZoneShortJson struct {
 	Name string `json:"Name"`
 	Id string `json:"Id"`
 }
+
+/*
+type CsrList struct {
+    Template string `yaml:"template"`
+	Domains []CsrDat `yaml:"domains"`
+}
+
+type CsrDat struct {
+    Domain string `yaml:"domain"`
+    Email string `yaml:"email"`
+	PemFil string `yaml:"pemfil"`
+    Name pkixName `yaml:"Name"`
+}
+
+type pkixName struct {
+    CommonName string `yaml:"CommonName"`
+    Country string `yaml:"Country"`
+    Province string `yaml:"Province"`
+    Locality string `yaml:"Locality"`
+    Organisation string `yaml:"Organisation"`
+    OrganisationUnit string `yaml:"OrganisationUnit"`
+}
+*/
 
 func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	var apiObj ApiObj
@@ -103,21 +125,6 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 // function that creates DNS Challenge record
 func (cfapi *cfApi) AddDnsChalRecord (zone ZoneShort, val string) (recId string, err error) {
 
-/*
-   yamlFilNam := "/home/peter/yaml/cloudflareApi.yaml"
-
-    apiObj, err := cfLib.InitCfLib(yamlFilNam)
-    if err != nil {
-        log.Fatalf("cfLib.InitCfLib: %v\n", err)
-    }
-    // print results
-    cfLib.PrintApiObj (apiObj)
-
-    api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-    if err != nil {
-        log.Fatalf("api init: %v/n", err)
-    }
-*/
     // Most API calls require a Context
 
 	if cfapi == nil {return "", fmt.Errorf("cfApi is nil!")}
@@ -156,7 +163,7 @@ func (cfapi *cfApi) AddDnsChalRecord (zone ZoneShort, val string) (recId string,
     return recId, nil
 }
 
-func (cfapi *cfApi) DelDnsChalRecord (zone ZoneShort, recId string) (err error) {
+func (cfapi *cfApi) DelDnsChalRecord (zone ZoneAcme) (err error) {
 
 	api := cfapi.API
 
@@ -166,6 +173,7 @@ func (cfapi *cfApi) DelDnsChalRecord (zone ZoneShort, recId string) (err error) 
     //domains
     rc.Level = cloudflare.ZoneRouteLevel
     rc.Identifier = zone.Id
+	recId := zone.AcmeId
 
 	err = api.DeleteDNSRecord(ctx, &rc, recId)
 	if err != nil {return fmt.Errorf("DeleteDnsRecord: %v", err)}
@@ -281,17 +289,6 @@ func ReadAcmeZones(inFilNam string)(zoneListObj *[]ZoneAcme, err error) {
 
 	var zones []ZoneAcme
 
-//	if infil == nil { return nil, fmt.Errorf("no file provided!")}
-
-/*
-	info, err := os.Stat(infilNam)
-	if err != nil {return nil, fmt.Errorf("info.Stat: %v", err)}
-
-
-	size := info.Size()
-	inBuf := make([]byte, int(size))
-*/
-
 	inBuf, err := os.ReadFile(inFilNam)
 	if err != nil {return nil, fmt.Errorf("os.ReadFile: %v", err)}
 
@@ -315,6 +312,49 @@ func ReadZoneShortFile(inFilNam string)(zoneList *ZoneList, err error) {
 
 }
 
+/*
+func ReadCsrFil(inFilNam string)(csrDatList *CsrList, err error) {
+
+	//todo check for yaml extension
+    bytData, err := os.ReadFile(inFilNam)
+    if err != nil {
+        return nil, fmt.Errorf("os.ReadFile: %v\n",err)
+    }
+
+    csrList := &CsrList{}
+    err = yaml.Unmarshal(bytData, csrList)
+    if err != nil {
+        return nil, fmt.Errorf("yaml Unmarshal: %v\n", err)
+    }
+
+//    PrintCsr(CsrList)
+	return csrList, nil
+}
+
+func PrintCsr(csrlist *CsrList) {
+
+    fmt.Println("******** Csr List *********")
+    fmt.Printf("template: %s\n", csrlist.Template)
+	numDom := len(csrlist.Domains)
+	fmt.Printf("domains: %d\n", numDom)
+	for i:=0; i< numDom; i++ {
+		csrdat := csrlist.Domains[i]
+	    fmt.Printf("  domain:   %s\n", csrdat.Domain)
+    	fmt.Printf("  email:    %s\n", csrdat.Email)
+	    fmt.Printf("  name:\n")
+    	nam:= csrdat.Name
+    	fmt.Printf("    CommonName:   %s\n", nam.CommonName)
+    	fmt.Printf("    Country:      %s\n", nam.Country)
+    	fmt.Printf("    Province:     %s\n", nam.Province)
+    	fmt.Printf("    Locality:     %s\n", nam.Locality)
+    	fmt.Printf("    Organisation: %s\n", nam.Organisation)
+    	fmt.Printf("    OrgUnit:      %s\n", nam.OrganisationUnit)
+	}
+
+    fmt.Println("******** End Csr List *******")
+
+}
+*/
 func PrintZones(zones []cloudflare.Zone) {
 
     fmt.Printf("************** Zones/Domains [%d] *************\n", len(zones))
