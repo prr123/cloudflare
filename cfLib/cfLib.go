@@ -123,7 +123,7 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 
 
 // function that creates DNS Challenge record
-func (cfapi *cfApi) AddDnsChalRecord (zone ZoneShort, val string) (recId string, err error) {
+func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, err error) {
 
     // Most API calls require a Context
 
