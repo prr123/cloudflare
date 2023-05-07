@@ -47,6 +47,7 @@ type ZoneAcme struct {
 	Name string `yaml:"Name"`
 	Id string `yaml:"Id"`
 	AcmeId string `yaml:"AcmeId"`
+	AcmeRec bool
 }
 
 type ZoneShortJson struct {
