@@ -21,13 +21,13 @@ type ApiObj struct {
     ApiKey string `yaml:"ApiKey"`
     ApiToken string `yaml:"ApiToken"`
 	AccountId string `yaml:"AccountId"`
-//    CADirUrl  string `yaml:"CA_DIR_URL"`
     Email     string `yaml:"Email"`
 	YamlFile	string
 }
 
 type cfApi struct {
 	API *cloudflare.API
+	ApiObj *ApiObj
 }
 
 type ZoneList struct {
@@ -54,29 +54,6 @@ type ZoneShortJson struct {
 	Name string `json:"Name"`
 	Id string `json:"Id"`
 }
-
-/*
-type CsrList struct {
-    Template string `yaml:"template"`
-	Domains []CsrDat `yaml:"domains"`
-}
-
-type CsrDat struct {
-    Domain string `yaml:"domain"`
-    Email string `yaml:"email"`
-	PemFil string `yaml:"pemfil"`
-    Name pkixName `yaml:"Name"`
-}
-
-type pkixName struct {
-    CommonName string `yaml:"CommonName"`
-    Country string `yaml:"Country"`
-    Province string `yaml:"Province"`
-    Locality string `yaml:"Locality"`
-    Organisation string `yaml:"Organisation"`
-    OrganisationUnit string `yaml:"OrganisationUnit"`
-}
-*/
 
 func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	var apiObj ApiObj
@@ -105,8 +82,17 @@ func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 
 //	api := &cloudflare.API{}
+	yamlFilNam := apifil
 
-	yamlFilNam := "/home/peter/yaml/cloudflareApi.yaml"
+	if len(apifil) == 0 {
+	   	cfDir := os.Getenv("CloudFlare")
+    	if len(cfDir) == 0 {
+        	return nil, fmt.Errorf("could not get env: CloudFlare\n")
+    	}
+	    yamlFilNam = cfDir + "/token/cfZonesApi.yaml"
+	}
+
+//	yamlFilNam := "/home/peter/yaml/cloudflareApi.yaml"
 
 	apiObj, err := InitCfLib(yamlFilNam)
     if err != nil {return nil, fmt.Errorf("cfLib.InitCfLib: %v\n", err)}
@@ -117,7 +103,7 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v/n", err)}
 
-	cfApiObj := &cfApi{API: api}
+	cfApiObj := &cfApi{API: api, ApiObj: apiObj}
 
 	return cfApiObj, nil
 }
