@@ -13,7 +13,7 @@ import (
 	"os"
 //    yaml "github.com/goccy/go-yaml"
 	"ns/cloudflare/cfLib"
-	"github.com/cloudflare/cloudflare-go"
+//	"github.com/cloudflare/cloudflare-go"
 )
 
 func main() {
@@ -25,31 +25,34 @@ func main() {
         os.Exit(-1)
     }
 
-    yamlFilNam := "cloudflareApi.yaml"
+    cfDir := os.Getenv("CloudFlare")
+    if len(cfDir) == 0 {
+        log.Fatalf("could not get env: CloudFlare\n")
+    }
 
-    if numArgs == 2 {yamlFilNam = os.Args[1]}
+    yamlApiFilNam := cfDir + "/token/cfUser.yaml"
 
-    log.Printf("Using yaml file: %s\n", yamlFilNam)
+    if numArgs == 2 {yamlApiFilNam = os.Args[1]}
 
-    apiObj, err := cfLib.InitCfLib(yamlFilNam)
+    log.Printf("Using yaml file: %s\n", yamlApiFilNam)
+
+    apiObj, err := cfLib.InitCfApi(yamlApiFilNam)
     if err != nil {
         log.Fatalf("cfLib.InitCfLib: %v\n", err)
     }
     // print results
-    cfLib.PrintApiObj (apiObj)
+    cfLib.PrintApiObj (apiObj.ApiObj)
 
-	// Construct a new API object using a global API key
-//	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
-	// alternatively, you can use a scoped API token
-
+/*
 //	cloudToken := "O5ART89fgxulItZ1l-o9PScX-uEGXN219dzo06Xi"
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {
 		log.Fatalf("api init: %v/n", err)
 	}
-
+*/
 	// Most API calls require a Context
 	ctx := context.Background()
+	api := apiObj.API
 
 	// Fetch user details on the account
 	u, err := api.UserDetails(ctx)
