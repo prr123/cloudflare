@@ -11,9 +11,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-//    yaml "github.com/goccy/go-yaml"
+
 	"ns/cloudflare/cfLib"
-//	"github.com/cloudflare/cloudflare-go"
 )
 
 func main() {
@@ -43,13 +42,6 @@ func main() {
     // print results
     cfLib.PrintApiObj (apiObj.ApiObj)
 
-/*
-//	cloudToken := "O5ART89fgxulItZ1l-o9PScX-uEGXN219dzo06Xi"
-	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-	if err != nil {
-		log.Fatalf("api init: %v/n", err)
-	}
-*/
 	// Most API calls require a Context
 	ctx := context.Background()
 	api := apiObj.API
