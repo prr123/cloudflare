@@ -79,9 +79,9 @@ func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 	return &apiObj, nil
 }
 
+//  function that initiates the cloudflare api with a yaml api file containing a token
 func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 
-//	api := &cloudflare.API{}
 	yamlFilNam := apifil
 
 	if len(apifil) == 0 {
@@ -92,13 +92,8 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 	    yamlFilNam = cfDir + "/token/cfZonesApi.yaml"
 	}
 
-//	yamlFilNam := "/home/peter/yaml/cloudflareApi.yaml"
-
 	apiObj, err := InitCfLib(yamlFilNam)
     if err != nil {return nil, fmt.Errorf("cfLib.InitCfLib: %v\n", err)}
-
-    // print results
-//    cfLib.PrintApiObj (apiObj)
 
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v/n", err)}
