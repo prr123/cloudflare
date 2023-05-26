@@ -30,7 +30,13 @@ func main() {
     }
 
 //	domain := os.Args[1]
-    yamlApiFilNam := "cloudflareApi.yaml"
+
+	cfDir := os.Getenv("CloudFlare")
+	if len(cfDir) == 0 {
+		log.Fatalf("could not get env: CloudFlare\n")
+	}
+
+    yamlApiFilNam := cfDir + "/token/cfZonesApi.yaml"
 	DomainFilNam := "cfDomainsLong"
 
 	flags := []string{"api","save"}
@@ -116,11 +122,12 @@ func main() {
 //	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
 	// alternatively, you can use a scoped API token
 
+/*
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {
 		log.Fatalf("api init: %v/n", err)
 	}
-
+*/
 	// Most API calls require a Context
 	ctx := context.Background()
 
