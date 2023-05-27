@@ -111,12 +111,12 @@ func main() {
 	}
 	defer DomainFil.Close()
 
-    apiObj, err := cfLib.InitCfLib(yamlApiFilNam)
+    apiObj, err := cfLib.InitCfApi(yamlApiFilNam)
     if err != nil {
         log.Fatalf("cfLib.InitCfLib: %v\n", err)
     }
     // print results
-    cfLib.PrintApiObj (apiObj)
+    cfLib.PrintApiObj (apiObj.ApiObj)
 
 	// Construct a new API object using a global API key
 //	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
