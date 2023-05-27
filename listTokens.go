@@ -105,5 +105,40 @@ func main() {
 		tok := tokList[i]
 		fmt.Printf("  [%d]: %-20s| %-30s| %-5s| %-10s %-20s\n",i+1, tok.ID, tok.Name, tok.Value, tok.Status, tok.ExpiresOn.Format(time.RFC1123) )
 	}
+	for i:=0; i<len(tokList); i++ {
+		tok := tokList[i]
+		fmt.Printf("**** detail token: %d ******\n", i+1)
+		fmt.Printf("  Id:     %s\n", tok.ID)
+		fmt.Printf("  Name:   %s\n", tok.Name)
+		fmt.Printf("  Value:  %s\n", tok.Value)
+		fmt.Printf("  Status: %s\n", tok.Status)
+		fmt.Printf("  Start:  %s\n", tok.NotBefore.Format(time.RFC1123))
+		fmt.Printf("  Expiration: %s\n", tok.ExpiresOn.Format(time.RFC1123))
+		fmt.Printf("  Modified:   %s\n", tok.ModifiedOn.Format(time.RFC1123))
+		fmt.Printf("  Policies: %d\n", len(tok.Policies))
+		for j:=0; j< len(tok.Policies); j++ {
+			pol := tok.Policies[j]
+			fmt.Printf("  ***** Policy %d ****\n", j+1)
+			fmt.Printf("    ID:     %s\n", pol.ID)
+			fmt.Printf("    Effect: %s\n", pol.Effect)
+			fmt.Printf("    Resources: %d\n", len(pol.Resources))
+			for k,v := range pol.Resources {
+				fmt.Printf("       key: %s val: %v\n",k , v)
+			}
+		}
+		cond := tok.Condition
+		if cond == nil {continue}
+		ipCond := cond.RequestIP
+		if ipCond == nil {continue}
 
+		fmt.Printf("  **** Conditions In:\n", )
+		for j:=0; j< len(ipCond.In); j++ {
+			fmt.Printf("    %d: %s\n", j+1, ipCond.In[j])
+		}
+		fmt.Printf("  **** Conditions Out:\n", )
+		for j:=0; j< len(ipCond.NotIn); j++ {
+			fmt.Printf("     %d: %s\n", j+1, ipCond.NotIn[j])
+		}
+
+	}
 }
