@@ -21,18 +21,18 @@ import (
 func main() {
 
     numArgs := len(os.Args)
-	useStr := "usage: readDomainsShort [domainfile] [/filTyp=json/yaml] [/api=apifile]"
+	useStr := "usage: readDomainsShort [domainfile] [/api=apifile]"
 
-	if numArgs > 4 {
+	if numArgs > 3 {
 		fmt.Println(useStr)
         log.Fatalf("too many CLI args!\n")
     }
 
 //	domain := os.Args[1]
     yamlApiFilNam := "cloudflareApi.yaml"
-	DomainFilNam := "cfDomainsShort"
+	DomainFilNam := "cfDomainsShort.yaml"
 
-	flags := []string{"api","filTyp"}
+	flags := []string{"api"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
 	if err != nil {
 		log.Fatalf("error parseFlags: %v\n",err)
@@ -40,9 +40,9 @@ func main() {
 
 	numFlags := len(flagMap)
 
-	if numArgs > numFlags + 2 {
+	if numArgs > numFlags + 1 {
 		fmt.Println(useStr)
-		log.Fatalf("error more than one cmd: %v\n",err)
+		log.Fatalf("error more than one flag: %v\n",err)
 	}
 
 	if numArgs == numFlags +2 {
