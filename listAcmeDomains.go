@@ -31,7 +31,7 @@ func main() {
     }
 
 //	domain := os.Args[1]
-    yamlApiFilNam := "cloudflareApi.yaml"
+    yamlApiFilNam := "/home/peter/yaml/cloudflareApi.yaml"
 	AcmeDomainFilNam := "cfDomainsAcme"
 
 	flags := []string{"api", "save"}
@@ -84,6 +84,7 @@ func main() {
 
 
 	// create yamlDomainFile
+	var DomainFil *os.File
 	if saveFlag {
 		if _, err := os.Stat(AcmeDomainFilNam); err != nil {
 			log.Printf("no existing domain file: %v!", err)
@@ -95,7 +96,7 @@ func main() {
     		}
 		}
 
-		DomainFil, err := os.Create(AcmeDomainFilNam)
+		DomainFil, err = os.Create(AcmeDomainFilNam)
 		if err != nil {
         	log.Fatal("could not create file %s: %v", AcmeDomainFilNam, err)
 		}
