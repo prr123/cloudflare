@@ -17,13 +17,14 @@ import (
     util "github.com/prr123/utility/utilLib"
 //    yaml "github.com/goccy/go-yaml"
 	"ns/cloudflare/cfLib"
-	"github.com/cloudflare/cloudflare-go"
+//	"github.com/cloudflare/cloudflare-go"
 )
 
 func main() {
 
 	dbg:= true
     numArgs := len(os.Args)
+
 	useStr := "usage: listAccounts [/yaml=apifile]\n"
 
 	switch numArgs {
@@ -55,22 +56,18 @@ func main() {
     }
 
 //	domain := os.Args[1]
-    cfApiFilNam := "cloudflareApi.yaml"
+	cfDir := os.Getenv("Cloudflare")
+	if len(cfDir) == 0 {log.Fatalf("could not resolve Cloudflare\n")}
+
+    cfApiFilNam := cfDir + "/token/cfRead.yaml"
 
     if numArgs ==2 {
 
 		flags := []string{"yaml"}
-		flagMap, err := util.ParseFlagsStart(os.Args, flags, 1)
+		flagMap, err := util.ParseFlags(os.Args, flags)
 		if err != nil {
 			log.Fatalf("error parseFlags: %v\n",err)
     	}
-
-		if dbg {
-			fmt.Printf("** flagMap: %d **\n", len(flagMap))
-			for k,v := range flagMap {
-				fmt.Printf("k: %v val: %v\n", k, v)
-			}
-		}
 
 		val, ok := flagMap["yaml"]
 		if !ok {
@@ -83,39 +80,29 @@ func main() {
 		cfApiFilNam = yamlFilNamStr
 	}
 
-    log.Printf("Using yaml apifile:    %s\n", cfApiFilNam)
+    log.Printf("Using cf apifile:    %s\n", cfApiFilNam)
 
-    apiObj, err := cfLib.InitCfLib(cfApiFilNam)
+    apiObj, err := cfLib.InitCfApi(cfApiFilNam)
     if err != nil {
-        log.Fatalf("cfLib.InitCfLib: %v\n", err)
+        log.Fatalf("cfLib.InitCfApi: %v\n", err)
     }
     // print results
-    if dbg {cfLib.PrintApiObj (apiObj)}
-
-	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-	if err != nil {
-		log.Fatalf("api init: %v/n", err)
-	}
+    if dbg {cfLib.PrintApiObj (apiObj.ApiObj)}
 
 	// Most API calls require a Context
 	ctx := context.Background()
+	api := apiObj.API
+
+	acntId := apiObj.ApiObj.AccountId
+	log.Printf("Account Id: %s\n", acntId)
 
 	fmt.Println("********************************************")
 
-	// first we need to retrieve account
-
-//	par := cloudflare.AccountsListParams{
-//		Name: apiObj.Email,
-//	}
-
-
-	acnt, _, err := api.Account(ctx, apiObj.AccountId)
+	acnt, _, err := api.Account(ctx, acntId)
 	if err != nil {
 		log.Fatalf("api.Account: %v\n", err)
 	}
 
 //	fmt.Printf("account: %v\n", acnt)
-
 	cfLib.PrintAccount(&acnt)
-
 }
