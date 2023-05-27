@@ -24,6 +24,7 @@ func main() {
 
 	dbg:= true
     numArgs := len(os.Args)
+
 	useStr := "usage: listAccounts [/yaml=apifile]\n"
 
 	switch numArgs {
@@ -55,7 +56,10 @@ func main() {
     }
 
 //	domain := os.Args[1]
-    cfApiFilNam := "cloudflareApi.yaml"
+	cfDir := os.Getenv("Cloudflare")
+	if len(cfDir) == 0 {log.Fatalf("could not resolve Cloudflare\n")}
+
+    cfApiFilNam := cfDir + "/token/cfRead.yaml"
 
     if numArgs ==2 {
 
@@ -76,92 +80,42 @@ func main() {
 		cfApiFilNam = yamlFilNamStr
 	}
 
-    log.Printf("Using yaml apifile:    %s\n", cfApiFilNam)
+    log.Printf("Using cf apifile:    %s\n", cfApiFilNam)
 
-/*
-	// create yamlDomainFile
-	yaml.DmainFilNam := 
-	if _, err := os.Stat(yamlDomainFilNam); err != nil {
-		log.Printf("no existing domain file: %v!", err)
-	} else {
-		log.Printf("removing existing domain file!")
-     	e := os.Remove(yamlDomainFilNam)
-    	if e != nil {
-        	log.Fatal("could not remove file %s: %v", yamlDomainFilNam, e)
-    	}
-	}
-
-	yamlDomainFil, err := os.Create(yamlDomainFilNam)
-	if err != nil {
-        log.Fatal("could not create file %s: %v", yamlDomainFilNam, err)
-	}
-	defer yamlDomainFil.Close()
-*/
-
-    apiObj, err := cfLib.InitCfLib(cfApiFilNam)
+    apiObj, err := cfLib.InitCfApi(cfApiFilNam)
     if err != nil {
-        log.Fatalf("cfLib.InitCfLib: %v\n", err)
+        log.Fatalf("cfLib.InitCfApi: %v\n", err)
     }
     // print results
-    if dbg {cfLib.PrintApiObj (apiObj)}
-
-	// Construct a new API object using a global API key
-//	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
-	// alternatively, you can use a scoped API token
-
-	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-	if err != nil {
-		log.Fatalf("api init: %v/n", err)
-	}
+    if dbg {cfLib.PrintApiObj (apiObj.ApiObj)}
 
 	// Most API calls require a Context
 	ctx := context.Background()
+	api := apiObj.API
+
+	acntId := apiObj.ApiObj.AccountId
+	log.Printf("Account Id: %s\n", acntId)
 
 	fmt.Println("********************************************")
 
 	// first we need to retrieve account
 
-//	par := cloudflare.AccountsListParams{
-//		Name: apiObj.Email,
-//	}
-
-
-	acnt, _, err := api.Account(ctx, apiObj.AccountId)
-	if err != nil {
-		log.Fatalf("api.Account: %v\n", err)
+	par := cloudflare.AccountsListParams{
+//		Name: apiObj.ApiObj.Email
 	}
+//	log.Printf("account email: %s\n",par.Name)
 
-	fmt.Printf("account: %v\n", acnt)
-
-/*
-//	acnts, resInfo, err := api.Accounts(ctx, par)
 	acnts, _, err := api.Accounts(ctx, par)
 	if err != nil {
 		log.Fatalf("api.Accounts: %v\n", err)
 	}
 
-	fmt.Printf("accounts: %d\n", len(acnts))
-*/
+	fmt.Printf("******* accounts: %d ********\n", len(acnts))
 
-
-/*
-	// todo: support for full or partial
-	zoneType := "partial"
-
-	// todo check whether domain is registered with namecheap
-	zoneNam := domainStr
-	zone, err :=api.CreateZone(ctx, zoneNam,
-/*
-	zones, err := api.ListZones(ctx)
-    if err != nil {
-        log.Fatalf("api.ListDNSRecords: %v\n", err)
-    }
-
-	cfLib.PrintZones(zones)
-
-	err = cfLib.SaveZones(zones, yamlDomainFil)
-    if err != nil {
-        log.Fatalf("cfLib.SaveZones: %v\n", err)
-    }
-*/
+	for i:=0; i< len(acnts); i++ {
+		acnt := acnts[i]
+		fmt. Printf("Account[%d]:\n", i+1)
+		cfLib.PrintAccount(&acnt)
+	}
 }
+
