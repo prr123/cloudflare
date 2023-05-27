@@ -21,6 +21,7 @@ type ApiObj struct {
     ApiKey string `yaml:"ApiKey"`
     ApiToken string `yaml:"ApiToken"`
 	AccountId string `yaml:"AccountId"`
+	Name string `yaml:"Name"`
     Email     string `yaml:"Email"`
 	YamlFile	string
 }
@@ -371,6 +372,7 @@ func PrintApiObj (apiObj *ApiObj) {
     fmt.Printf("APIKey:    %s\n", apiObj.ApiKey)
     fmt.Printf("APIToken:  %s\n", apiObj.ApiToken)
     fmt.Printf("AccountId: %s\n", apiObj.AccountId)
+    fmt.Printf("Name:     %s\n", apiObj.Name)
     fmt.Printf("Email:     %s\n", apiObj.Email)
     fmt.Println("********************************************")
 }
