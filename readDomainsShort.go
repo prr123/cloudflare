@@ -28,9 +28,15 @@ func main() {
         log.Fatalf("too many CLI args!\n")
     }
 
+//	cfDir := os.Getenv("Cloudflare")
+//	if len(cfDir) == 0 {log.Fatalf("could not resolve env var Cloudflare!")}
+
+	zoneDir := os.Getenv("zoneDir")
+	if len(zoneDir) == 0 {log.Fatalf("could not resolve env var zoneDir!")}
+
 //	domain := os.Args[1]
-    yamlApiFilNam := "cloudflareApi.yaml"
-	DomainFilNam := "cfDomainsShort.yaml"
+//    cfApiFilNam := cfDir + "/token/Api.yaml"
+	DomainFilNam := zoneDir + "/cfDomainsShort.yaml"
 
 	flags := []string{"api"}
 	flagMap, err := util.ParseFlags(os.Args, flags)
@@ -54,16 +60,18 @@ func main() {
 	}
 
 	domainExt := ".yaml"
-	jsonTyp := false
+//	jsonTyp := false
 	if numFlags >0 {
+/*
 		val, ok := flagMap["api"]
 		if ok {
 			yamlFilNamStr, ok2 := val.(string)
 			if !ok2 {
 				log.Fatalf("api flag value is not a string!")
 			}
-			yamlApiFilNam = yamlFilNamStr
+//			yamlApiFilNam = yamlFilNamStr
 		}
+*/
 		saveVal, ok := flagMap["filTyp"]
 		if ok {
 			saveStr, ok2 := saveVal.(string)
@@ -76,47 +84,44 @@ func main() {
 				domainExt = ".yaml"
 			case "json":
 				domainExt = ".json"
-				jsonTyp =true
+//				jsonTyp =true
 			default:
 				log.Fatalf("invalid save flag:!", saveStr)
 			}
 		}
 	}
 
-	DomainFilNam = DomainFilNam + domainExt
-    log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
-    log.Printf("Using yaml domainsfile: %s\n", DomainFilNam)
+//	DomainFilNam = DomainFilNam + domainExt
+//    log.Printf("Using yaml apifile:    %s\n", yamlApiFilNam)
+    log.Printf("Using domainsfile: %s\n", DomainFilNam)
+    log.Printf("domainsfile type: %s\n", domainExt)
 
 	// create yamlDomainFile
+/*
 	if _, err := os.Stat(DomainFilNam); err != nil {
 		log.Fatalf("no existing domain file: %v!\n", err)
 	}
+*/
 
+/*
 	infil, err := os.Open(DomainFilNam)
 	if err != nil {
         log.Fatal("could not open file %s: %v", DomainFilNam, err)
 	}
 
-	var zoneShortList *[]cfLib.ZoneShort
 	if jsonTyp {
 		log.Fatal("json read: still todo\n")
-/*
+
 		err = cfLib.SaveZonesShortJson(zoneShortList, DomainFil)
     	if err != nil {
         	log.Fatalf("cfLib.SaveZonesShortJson: %v\n", err)
     	}
+	}
 */
-	} else {
-		zoneShortList, err = cfLib.ReadZonesShortYaml(infil)
-    	if err != nil {
-        	log.Fatalf("cfLib.ReadZonesShortYaml: %v\n", err)
-    	}
-	}
 
-	fmt.Println("*************** Zones **********************")
-	for i:=0; i<len((*zoneShortList)); i++ {
-		zone := (*zoneShortList)[i]
-		fmt.Printf("Zone[%d]: Name: %s Id: %s\n", i+1, zone.Name, zone.Id)
-	}
-	log.Printf("success")
+	zoneList, err := cfLib.ReadZoneShortFile(DomainFilNam)
+	if err != nil {log.Fatalf("cfLib.ReadZonesShortFile: %v\n", err)}
+
+
+	cfLib.PrintZoneList(zoneList)
 }
