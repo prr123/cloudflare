@@ -31,6 +31,31 @@ type cfApi struct {
 	ApiObj *ApiObj
 }
 
+type TokList struct {
+	AccountId string `yaml:"AccountId"`
+	Name string `yaml:"Name"`
+	Mod string `yaml:"ModOn"`
+	Toks []cfToken `yaml:"Toks"`
+}
+
+type cfToken struct {
+	Id string `yaml:"Id"`
+	Name string `yaml:"Name"`
+//	Exp	string `yaml:"Exp"`
+	ExpTim time.Time `yaml:"Exp"`
+}
+
+type ApiPerm struct {
+	Id string `yaml:"ID"`
+	Name string `yaml:"Name"`
+	Scopes int `yaml:"Scopes"`
+}
+
+type ApiPermList struct {
+	Date time.Time `yaml:"Date"`
+	ApiPerms []ApiPerm `yaml:"ApiPerm"`
+}
+
 type ZoneList struct {
 	AccountId string `yaml:"AccountId"`
 	Email string `yaml:"Email"`
@@ -338,6 +363,32 @@ func PrintCsr(csrlist *CsrList) {
 
 }
 */
+
+func SaveTokList(outFilnam string, tokList []cloudflare.APIToken) (err error){
+
+	var tokSav TokList
+
+	cfTokList := make([]cfToken, len(tokList))
+
+	tokSav.Toks = cfTokList
+
+    for i:=0; i<len(tokList); i++ {
+//        tok := tokList[i]
+		cfTokList[i].Id = tokList[i].ID
+		cfTokList[i].Name = tokList[i].Name
+		cfTokList[i].ExpTim = *(tokList[i].ExpiresOn)
+//        fmt.Printf("  [%d]: %-20s| %-30s| %-5s| %-10s %-20s\n",i+1, tok.ID, tok.Name, tok.Value, tok.Status, tok.ExpiresOn.Format(time.RFC1123))
+	}
+
+    yamlData, err := yaml.Marshal(&tokSav)
+    if err != nil {return fmt.Errorf("yaml.Marshal: %v", err)}
+
+   	err = os.WriteFile(outFilnam,yamlData, 0666)
+    if err != nil {return fmt.Errorf("yamlData os.Write: %v", err)}
+
+    return nil
+}
+
 func PrintZones(zones []cloudflare.Zone) {
 
     fmt.Printf("************** Zones/Domains [%d] *************\n", len(zones))
@@ -482,9 +533,15 @@ func PrintToken(tok cloudflare.APIToken) {
 	fmt.Printf("  Name:   %s\n", tok.Name)
 	fmt.Printf("  Value:  %s\n", tok.Value)
 	fmt.Printf("  Status: %s\n", tok.Status)
-	fmt.Printf("  Start:  %s\n", tok.NotBefore.Format(time.RFC1123))
-	fmt.Printf("  Expiration: %s\n", tok.ExpiresOn.Format(time.RFC1123))
-	fmt.Printf("  Modified:   %s\n", tok.ModifiedOn.Format(time.RFC1123))
+	timStr := "NA"
+	if tok.NotBefore != nil {timStr = tok.NotBefore.Format(time.RFC1123)}
+	fmt.Printf("  Start:  %s\n", timStr)
+	timStr = "NA"
+	if tok.ExpiresOn != nil {timStr = tok.ExpiresOn.Format(time.RFC1123)}
+	fmt.Printf("  Expiration: %s\n", timStr)
+	timStr = "NA"
+	if tok.ModifiedOn != nil {timStr = tok.ModifiedOn.Format(time.RFC1123)}
+	fmt.Printf("  Modified:   %s\n", timStr)
 	fmt.Printf("  Policies: %d\n", len(tok.Policies))
 	for j:=0; j< len(tok.Policies); j++ {
 		pol := tok.Policies[j]
@@ -494,6 +551,14 @@ func PrintToken(tok cloudflare.APIToken) {
 		fmt.Printf("    Resources: %d\n", len(pol.Resources))
 		for k,v := range pol.Resources {
 			fmt.Printf("       key: %s val: %v\n",k , v)
+		}
+		fmt.Printf("    PermGroups: %d\n", len(pol.PermissionGroups))
+		for k:=0; k<len(pol.PermissionGroups); k++ {
+			pgrp := pol.PermissionGroups[k]
+			fmt.Printf("        pgrp[%d]: %s %s %d\n", k+1, pgrp.ID, pgrp.Name, len(pgrp.Scopes))
+			for l:=1; l<len(pgrp.Scopes); l++ {
+				fmt.Printf("         scope[%d]: %s\n", l+1, pgrp.Scopes[l])
+			}
 		}
 	}
 	cond := tok.Condition
