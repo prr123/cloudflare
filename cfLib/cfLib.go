@@ -154,6 +154,29 @@ func (cfapi *cfApi) ListDnsRecords (zoneId string) (dnsList *[]cloudflare.DNSRec
 	return &dnsRecs, nil
 }
 
+func (cfapi *cfApi) AddDnsRecord (zoneId string, dnsPar *cloudflare.CreateDNSRecordParams) (dnsRec *cloudflare.DNSRecord, err error) {
+
+    // Most API calls require a Context
+
+	if cfapi == nil {return nil, fmt.Errorf("cfApi is nil!")}
+	if cfapi.API == nil {return nil, fmt.Errorf("cfApi.api is nil!")}
+
+	api := cfapi.API
+
+    ctx := context.Background()
+
+    rc := cloudflare.ResourceContainer{
+   		Level: cloudflare.ZoneRouteLevel,
+		Identifier: zoneId,
+	}
+
+    dnsrec, err := api.CreateDNSRecord(ctx, &rc, *dnsPar)
+    if err != nil { return nil, fmt.Errorf("cfApi.CreateDNSRecord: %v\n", err)
+    }
+
+    return &dnsrec, nil
+}
+
 // function that creates DNS Challenge record
 func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, err error) {
 
@@ -176,12 +199,10 @@ func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, 
         Comment: "acme challenge record",
     }
 
-    var rc cloudflare.ResourceContainer
-    //domains
-    rc.Level = cloudflare.ZoneRouteLevel
-    //domain id == zone id
-//    rc.Identifier = "d122e58449ac644ef5d11c983e3ca7eb"
-    rc.Identifier = zone.Id
+    rc := cloudflare.ResourceContainer{
+   		Level: cloudflare.ZoneRouteLevel,
+		Identifier: zone.Id,
+	}
 
     dnsRec, err := api.CreateDNSRecord(ctx, &rc, dnsPar)
     if err != nil { return "", fmt.Errorf("cfApi.CreateDNSRecord: %v\n", err)
