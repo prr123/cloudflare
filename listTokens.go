@@ -26,7 +26,8 @@ func main() {
 	cfDir := os.Getenv("Cloudflare")
     if len(cfDir) == 0 {log.Fatalf("could not get env: CloudFlare\n")}
 
-    cfApiFilNam := cfDir + "/token/cfTok.yaml"
+    cfApiFilnam := cfDir + "/token/cfTok.yaml"
+	cfTokFilnam := cfDir + "/token/TokList.yaml"
 
 	useStr := "usage: listTokens [/yaml=apifile]\n"
 
@@ -65,7 +66,7 @@ func main() {
 		if !ok2 {
 			log.Fatalf("token file value not a string!")
 		}
-		cfApiFilNam = cfDir +"/token/" + tokFilnam
+		cfApiFilnam = cfDir +"/token/" + tokFilnam
 
 		_, ok = flagMap["dbg"]
 		if ok {
@@ -75,10 +76,11 @@ func main() {
 
 	}
 
-    log.Printf("Using token apifile:    %s\n", cfApiFilNam)
+    log.Printf("Using token apifile:    %s\n", cfApiFilnam)
+    log.Printf("Using token list file:    %s\n", cfTokFilnam)
 	log.Printf("debug: %t\n", dbg)
 
-    apiObj, err := cfLib.InitCfApi(cfApiFilNam)
+    apiObj, err := cfLib.InitCfApi(cfApiFilnam)
     if err != nil {log.Fatalf("cfLib.InitCfApi: %v\n", err)}
 
     // print results
@@ -97,4 +99,9 @@ func main() {
 	if err != nil {log.Fatalf("APITokens: %v\n", err)}
 
 	cfLib.PrintTokList(tokList)
+
+	
+	err = cfLib.SaveTokList(cfTokFilnam, tokList)
+	if err != nil {log.Fatalf("SaveTokList: %v\n", err)}
+
 }
