@@ -177,6 +177,23 @@ func (cfapi *cfApi) AddDnsRecord (zoneId string, dnsPar *cloudflare.CreateDNSRec
     return &dnsrec, nil
 }
 
+func (cfapi *cfApi) DelDnsRec (zoneId, recId string) (err error) {
+
+    api := cfapi.API
+
+    ctx := context.Background()
+
+    rc := cloudflare.ResourceContainer{
+   		Level: cloudflare.ZoneRouteLevel,
+		Identifier: zoneId,
+	}
+
+    err = api.DeleteDNSRecord(ctx, &rc, recId)
+    if err != nil {return fmt.Errorf("DeleteDnsRecord: %v", err)}
+
+    return nil
+}
+
 // function that creates DNS Challenge record
 func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, err error) {
 
