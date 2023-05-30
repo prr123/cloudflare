@@ -8,34 +8,50 @@
 package main
 
 import (
-	"context"
+//	"context"
 	"fmt"
 	"log"
 	"os"
+	"bufio"
+	"strconv"
 //	"time"
 
     util "github.com/prr123/utility/utilLib"
 //    yaml "github.com/goccy/go-yaml"
 	"ns/cloudflare/cfLib"
-	"github.com/cloudflare/cloudflare-go"
+//	"github.com/cloudflare/cloudflare-go"
 )
 
 func main() {
 
     numArgs := len(os.Args)
+
+    zoneDir := os.Getenv("zoneDir")
+    if len(zoneDir) == 0 {log.Fatalf("could not resolve env var zoneDir!")}
+
+    DomainFilNam := zoneDir + "/cfDomainsShort.yaml"
+
+    cfDir := os.Getenv("Cloudflare")
+    if len(cfDir) == 0 {log.Fatalf("could not resolve env var Cloudflare!")}
+
+    cfApiFilNam := cfDir + "/token/cfDns.yaml"
+
+	useStr := "delDnsRec domain rec [/yaml=file]"
     if numArgs < 1 {
-        fmt.Printf("usage: addDnsRec [/yaml=file]\n")
+        fmt.Printf("usage: %s\n", useStr)
         log.Fatalf("insufficient CLI args!\n")
     }
-	if numArgs > 2 {
-        fmt.Printf("usage: addDnsRec [/yaml=file]\n")
+	if numArgs > 4 {
+        fmt.Printf("usage: %s\n", useStr)
         log.Fatalf("too many CLI args!\n")
     }
 
-//	domain := os.Args[1]
-    yamlFilNam := "cloudflareApi.yaml"
 
-    if numArgs == 2 {
+	domain := os.Args[1]
+
+
+
+    if numArgs == 3 {
 
 		flags := []string{"yaml"}
 		flagMap, err := util.ParseFlags(os.Args, flags)
@@ -47,53 +63,85 @@ func main() {
 		if !ok {
 			log.Fatalf("no yaml file specified!")
 		}
-		yamlFilNam, ok = val.(string)
+		cfApiFilNam, ok = val.(string)
 		if !ok {
 			log.Fatalf("no yaml file value not a string!")
 		}
 	}
 
-    log.Printf("Using yaml file: %s\n", yamlFilNam)
+    log.Printf("Using api token: %s\n", cfApiFilNam)
 
-    apiObj, err := cfLib.InitCfLib(yamlFilNam)
+    apiObj, err := cfLib.InitCfApi(cfApiFilNam)
     if err != nil {
-        log.Fatalf("cfLib.InitCfLib: %v\n", err)
+        log.Fatalf("cfLib.InitCfApi: %v\n", err)
     }
     // print results
-    cfLib.PrintApiObj (apiObj)
+    cfLib.PrintApiObj (apiObj.ApiObj)
 
-	// Construct a new API object using a global API key
-//	api, err := cloudflare.New(os.Getenv("CLOUDFLARE_API_KEY"), os.Getenv("CLOUDFLARE_API_EMAIL"))
-	// alternatively, you can use a scoped API token
+    fmt.Println("********************************************")
 
-	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-	if err != nil {
-		log.Fatalf("api init: %v/n", err)
-	}
+    //get Domain id file
+    zoneList, err := cfLib.ReadZoneShortFile(DomainFilNam)
+    if err != nil {log.Fatalf("ReadZoneFileShort: %v\n", err)}
 
-	// Most API calls require a Context
-	ctx := context.Background()
+    log.Printf("success reading all cf zones!\n")
+    cfLib.PrintZoneList(zoneList)
 
+    numZones := len(zoneList.Zones)
+    if _, err := os.Stat(DomainFilNam); err != nil {
+        log.Fatalf("no existing domain file: %v!\n", err)
+    }
+    log.Printf("Zones: %d\n",numZones)
+
+    found := -1
+    for i:=0; i<numZones; i++ {
+        zone := zoneList.Zones[i]
+        if zone.Name == domain {
+            found = i
+            break
+        }
+    }
+    if found < 0 {
+        log.Fatalf("domain: %s not found!\n", domain)
+    }
+
+    zone := zoneList.Zones[found]
+    fmt.Printf("Zone[%d]: Name: %s Id: %s\n", found+1, zone.Name, zone.Id)
+
+
+    dnsRecList,err := apiObj.ListDnsRecords(zone.Id)
+    if err != nil {
+        log.Fatalf("api.ListDNSRecords: %v\n", err)
+    }
+    cfLib.PrintDnsRecs(dnsRecList)
+
+    reader := bufio.NewReader(os.Stdin)
+    fmt.Printf("Enter Dns Rec number: ")
+    str, err := reader.ReadString('\n')
+    if err != nil {
+        log.Fatal(err)
+    }
+    numStr := str[:len(str)-1]
+    num, err := strconv.Atoi(numStr)
+    if err!= nil {log.Fatalf("string conversion: %v\n", err)}
+    fmt.Printf("DnsRec: %d\n", num)
+
+	if num<1 || num > len(*dnsRecList) {log.Fatal("dns Rec number outside boundary!")}
+
+	dnsRec := (*dnsRecList)[num-1]
+	cfLib.PrintDnsRec(&dnsRec)
+
+//	dnsRecId := dnsRec.ID
 	fmt.Println("************** delDnsRec *********************")
 
-
-	dnsRecId := "b12cd8fae338120e4aced6378fa8d5e5"
-
-	var rc cloudflare.ResourceContainer
-	//domains
-	rc.Level = cloudflare.ZoneRouteLevel
-	//domain id
-	rc.Identifier = "0e6e30d5edb4c1025817eb1678511cef"
-
-	err = api.DeleteDNSRecord(ctx, &rc, dnsRecId)
+	err = apiObj.DelDnsRec(zone.Id, dnsRec.ID)
     if err != nil {
-        log.Fatalf("api.DeleteDNSRecord: %v\n", err)
+        log.Fatalf("api.DelDNSRec: %v\n", err)
     }
 
 	fmt.Println("Success Delete Dns Record")
 
-//	cfLib.PrintResInfo(resInfo)
-//	fmt.Println("************** after *********************")
+//	fmt.Println("************** after deletion *********************")
 //	cfLib.PrintDnsRec(&dnsRecs)
 
 }
