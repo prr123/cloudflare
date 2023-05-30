@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+//	"context"
 	"fmt"
 	"log"
 	"os"
@@ -9,7 +9,7 @@ import (
     util "github.com/prr123/utility/utilLib"
 //    yaml "github.com/goccy/go-yaml"
 	"ns/cloudflare/cfLib"
-	"github.com/cloudflare/cloudflare-go"
+//	"github.com/cloudflare/cloudflare-go"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 	cfDir := os.Getenv("Cloudflare")
 	if len(cfDir) == 0 {log.Fatalf("could not resolve env var Cloudflare!")}
 
-    yamlApiFilNam := cfDir + "/token/cfDnsApi.yaml"
+    yamlApiFilNam := cfDir + "/token/cfDns.yaml"
 
 	dbg:= true
 
@@ -80,8 +80,8 @@ func main() {
 
 
 	// Most API calls require a Context
-	ctx := context.Background()
-	api := apiObj.API
+//	ctx := context.Background()
+//	api := apiObj.API
 
 	fmt.Println("********************************************")
 
@@ -113,16 +113,10 @@ func main() {
 	zone := zoneList.Zones[found]
 	fmt.Printf("Zone[%d]: Name: %s Id: %s\n", found+1, zone.Name, zone.Id)
 
-	// try to list DNS Parameters
-	var listDns cloudflare.ListDNSRecordsParams
 
-	var rc cloudflare.ResourceContainer
-	rc.Level = cloudflare.ZoneRouteLevel
-	rc.Identifier = zone.Id
-
-	dnsRecs, _, err := api.ListDNSRecords(ctx, &rc, listDns)
+	dnsRecs,err := apiObj.ListDnsRecords(zone.Id)
     if err != nil {
         log.Fatalf("api.ListDNSRecords: %v\n", err)
     }
-	cfLib.PrintDnsRecs(&dnsRecs)
+	cfLib.PrintDnsRecs(dnsRecs)
 }
