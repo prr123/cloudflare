@@ -25,37 +25,31 @@ func main() {
 	dbg:= true
     numArgs := len(os.Args)
 
-	useStr := "usage: listAccounts [/yaml=apifile]\n"
+	useStr := "usage: listAccount [/yaml=apifile]\n"
+	helpStr := "This program prints the details of the account with the accountid specified in the cloudflare yaml file.\nThe default yaml file is cfRead.yaml.\n"
 
 	switch numArgs {
     case 1:
-//		fmt.Printf(useStr)
-//        log.Fatalf("insufficient CLI args!\n")
-/*
-    case 2:
-		argByte := []byte(os.Args(1))
-		if argByte[0] == '/' {
-			log.Fatalf("no domain name provided!")
-		}
-		domainStr = os.Args[1]
-*/
+		fmt.Printf(useStr)
+        log.Fatalf("insufficient CLI args!\n")
 	case 2:
 		cmdStr := os.Args[1]
 		argByte := []byte(cmdStr)
 		if argByte[0] != '/' {
 			if cmdStr == "help" {
 				fmt.Printf(useStr)
+				fmt.Printf(helpStr)
 				os.Exit(-1)
 			}
 			fmt.Printf(useStr)
 			log.Fatalf("invalid command!")
 		}
+
 	default:
         fmt.Printf(useStr)
         log.Fatalf("too many CLI args!\n")
     }
 
-//	domain := os.Args[1]
 	cfDir := os.Getenv("Cloudflare")
 	if len(cfDir) == 0 {log.Fatalf("could not resolve Cloudflare\n")}
 
