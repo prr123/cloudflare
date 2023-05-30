@@ -129,6 +129,30 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 	return cfApiObj, nil
 }
 
+func (cfapi *cfApi) ListDnsRecords (zoneId string) (dnsList *[]cloudflare.DNSRecord, err error) {
+
+	if cfapi == nil {return nil, fmt.Errorf("cfApi is nil!")}
+	if cfapi.API == nil {return nil, fmt.Errorf("cfApi.api is nil!")}
+
+	if len(zoneId) == 0 {return nil, fmt.Errorf("no zoneId provided!")}
+
+	api := cfapi.API
+
+    ctx := context.Background()
+
+    rc := cloudflare.ResourceContainer{
+   		Level: cloudflare.ZoneRouteLevel,
+		Identifier: zoneId,
+	}
+
+	DnsPars:=cloudflare.ListDNSRecordsParams{}
+
+	dnsRecs, _, err := api.ListDNSRecords(ctx, &rc, DnsPars)
+	if err != nil {return nil, fmt.Errorf("api.ListDNSRecords: %v\n", err)}
+//    PrintDnsRecs(&dnsRecs)
+
+	return &dnsRecs, nil
+}
 
 // function that creates DNS Challenge record
 func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, err error) {
