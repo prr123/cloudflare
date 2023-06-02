@@ -111,9 +111,9 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 	yamlFilNam := apifil
 
 	if len(apifil) == 0 {
-	   	cfDir := os.Getenv("CloudFlare")
+	   	cfDir := os.Getenv("Cloudflare")
     	if len(cfDir) == 0 {
-        	return nil, fmt.Errorf("could not get env: CloudFlare\n")
+        	return nil, fmt.Errorf("could not get env: Cloudflare\n")
     	}
 	    yamlFilNam = cfDir + "/token/cfZonesApi.yaml"
 	}
@@ -177,6 +177,7 @@ func (cfapi *cfApi) AddDnsRecord (zoneId string, dnsPar *cloudflare.CreateDNSRec
     return &dnsrec, nil
 }
 
+// methods that deletes a DnsRec from a zone with zoneId
 func (cfapi *cfApi) DelDnsRec (zoneId, recId string) (err error) {
 
     api := cfapi.API
@@ -193,6 +194,7 @@ func (cfapi *cfApi) DelDnsRec (zoneId, recId string) (err error) {
 
     return nil
 }
+
 
 // function that creates DNS Challenge record
 func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, err error) {
@@ -222,7 +224,7 @@ func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, 
 	}
 
     dnsRec, err := api.CreateDNSRecord(ctx, &rc, dnsPar)
-    if err != nil { return "", fmt.Errorf("cfApi.CreateDNSRecord: %v\n", err)
+    if err != nil { return "", fmt.Errorf("cfApi.AddDNSRecord: %v\n", err)
     }
 
 	recId = dnsRec.ID
@@ -250,6 +252,27 @@ func (cfapi *cfApi) DelDnsChalRecord (zone ZoneAcme) (err error) {
 
 	return nil
 }
+
+// method that verifies tokens
+func (cfapi *cfApi) VerifyToken() (tokInfo *cloudflare.APITokenVerifyBody, err error) {
+
+	api:= cfapi.API
+	if api == nil {return nil, fmt.Errorf("no valid api!")}
+
+	res , err := api.VerifyAPIToken(context.Background())
+	if err != nil {return &res, fmt.Errorf("VerifyAPIToken %v", err)}
+
+	return &res, nil
+}
+
+func PrintTokResp(res *cloudflare.APITokenVerifyBody) {
+	fmt.Printf("************ Token Verification ******\n")
+	fmt.Printf("ID:       %s\n", res.ID)
+	fmt.Printf("Status:   %s\n", res.Status)
+	fmt.Printf("NotBefore: %s\n",res.NotBefore.Format(time.RFC1123))
+	fmt.Printf("Expires:   %s\n", res.ExpiresOn.Format(time.RFC1123))
+}
+
 
 func SaveZonesJson(zones []cloudflare.Zone, outfil *os.File)(err error) {
 
