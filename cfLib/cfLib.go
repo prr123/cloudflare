@@ -22,8 +22,9 @@ type ApiObj struct {
     ApiToken string `yaml:"ApiToken"`
 	AccountId string `yaml:"AccountId"`
 	Name string `yaml:"Name"`
+	Expiration time.Time `yaml:"Expire"`
     Email     string `yaml:"Email"`
-	YamlFile	string
+	YamlFile	string `yaml:"cfToken File"`
 }
 
 type cfApi struct {
@@ -41,7 +42,6 @@ type TokList struct {
 type cfToken struct {
 	Id string `yaml:"Id"`
 	Name string `yaml:"Name"`
-//	Exp	string `yaml:"Exp"`
 	ExpTim time.Time `yaml:"Exp"`
 }
 
@@ -81,11 +81,11 @@ type ZoneShortJson struct {
 	Id string `json:"Id"`
 }
 
-func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
+func InitCfLib(yamlFilnam string) (apiObjRef *ApiObj, err error) {
 	var apiObj ApiObj
 
     // open file and decode
-    buf, err := os.ReadFile(yamlFilNam)
+    buf, err := os.ReadFile(yamlFilnam)
     if err != nil {
         return nil, fmt.Errorf("cannot open yaml File: os.ReadFile: %v\n", err)
     }
@@ -100,25 +100,26 @@ func InitCfLib(yamlFilNam string) (apiObjRef *ApiObj, err error) {
 		return nil, fmt.Errorf("Api is not cloudflare!")
 	}
 
-	apiObj.YamlFile = yamlFilNam
+	apiObj.YamlFile = yamlFilnam
 
 	return &apiObj, nil
 }
 
 //  function that initiates the cloudflare api with a yaml api file containing a token
-func InitCfApi(apifil string) (cfapi *cfApi, err error) {
+func InitCfApi(apiFilnam string) (cfapi *cfApi, err error) {
 
-	yamlFilNam := apifil
+	yamlFilnam := ""
 
-	if len(apifil) == 0 {
-	   	cfDir := os.Getenv("Cloudflare")
-    	if len(cfDir) == 0 {
-        	return nil, fmt.Errorf("could not get env: Cloudflare\n")
-    	}
-	    yamlFilNam = cfDir + "/token/cfZonesApi.yaml"
+	cfDir := os.Getenv("Cloudflare")
+	if len(cfDir) == 0 {return nil, fmt.Errorf("could not get env: Cloudflare\n")}
+
+	if len(apiFilnam) == 0 {
+	    yamlFilnam = cfDir + "/token/cfZones.yaml"
+	} else {
+		yamlFilnam = cfDir + "/token/" + apiFilnam
 	}
 
-	apiObj, err := InitCfLib(yamlFilNam)
+	apiObj, err := InitCfLib(yamlFilnam)
     if err != nil {return nil, fmt.Errorf("cfLib.InitCfLib: %v\n", err)}
 
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
@@ -128,6 +129,54 @@ func InitCfApi(apifil string) (cfapi *cfApi, err error) {
 
 	return cfApiObj, nil
 }
+
+func VerifyCFToken (tokFilnam string) (err error) {
+
+	var apiObj ApiObj
+
+	yamlFilnam := ""
+
+	cfDir := os.Getenv("Cloudflare")
+	if len(cfDir) == 0 {return fmt.Errorf("could not get env: Cloudflare\n")}
+
+	if len(tokFilnam) == 0 {
+	    yamlFilnam = cfDir + "/token/cfZones.yaml"
+	} else {
+		yamlFilnam = cfDir + "/token/" + tokFilnam
+	}
+
+    buf, err := os.ReadFile(yamlFilnam)
+    if err != nil {
+        return fmt.Errorf("cannot open yaml File: os.ReadFile: %v\n", err)
+    }
+
+//    fmt.Printf("buf [%d]:\n%s\n", len(buf), string(buf))
+
+    if err := yaml.Unmarshal(buf, &apiObj); err !=nil {
+		return fmt.Errorf("error Unmarshalling Yaml File: %v\n", err)
+    }
+
+	if apiObj.Api != "cloudflare" {
+		return fmt.Errorf("Api is not cloudflare!")
+	}
+
+	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
+	if err != nil {return fmt.Errorf("NewWithAPIToken: %v/n", err)}
+
+    ctx := context.Background()
+
+	tokResp, err := api.VerifyAPIToken(ctx)
+	if err != nil {return fmt.Errorf("VerifyApiToken: %v", err)}
+
+	fmt.Printf("*** Token Response ****\n")
+	fmt.Printf("ID:     %s\n", tokResp.ID)
+	fmt.Printf("Status: %s\n", tokResp.Status)
+	fmt.Printf("No Before: %s\n", tokResp.NotBefore.Format(time.RFC1123))
+	fmt.Printf("Expires:   %s\n", tokResp.ExpiresOn.Format(time.RFC1123))
+
+	return nil
+}
+
 
 func (cfapi *cfApi) ListDnsRecords (zoneId string) (dnsList *[]cloudflare.DNSRecord, err error) {
 
@@ -197,7 +246,7 @@ func (cfapi *cfApi) DelDnsRec (zoneId, recId string) (err error) {
 
 
 // function that creates DNS Challenge record
-func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, err error) {
+func (cfapi *cfApi) AddDnsChalRecord (zoneId string, val string) (recId string, err error) {
 
     // Most API calls require a Context
 
@@ -220,7 +269,7 @@ func (cfapi *cfApi) AddDnsChalRecord (zone ZoneAcme, val string) (recId string, 
 
     rc := cloudflare.ResourceContainer{
    		Level: cloudflare.ZoneRouteLevel,
-		Identifier: zone.Id,
+		Identifier: zoneId,
 	}
 
     dnsRec, err := api.CreateDNSRecord(ctx, &rc, dnsPar)
