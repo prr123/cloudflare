@@ -27,6 +27,7 @@ func main() {
 
 	useStr := "creTokFile /token=token /file=yamlfile [/dbg]"
 	helpStr := "program create a yaml token file from a token and verify the token."
+	dbg := false
 
     cfDir := os.Getenv("Cloudflare")
     if len(cfDir) == 0 {log.Fatalf("could not resolve Cloudflare\n")}
@@ -57,33 +58,51 @@ func main() {
 
 	val, ok := flagMap["file"]
 	if !ok {
-		log.Fatalf("no file specified!")
+        fmt.Printf("usage: %s\n", useStr)
+		log.Fatalf("no file flag!")
 	}
 
 	outFilnam, ok := val.(string)
-	if len(outFilnam) == 0 {log.Fatalf("no filename provided with /file flag!")}
-
+	if len(outFilnam) == 0 {
+        fmt.Printf("usage: %s\n", useStr)
+		log.Fatalf("no filename provided with /file flag!")
+	}
 	if idx:=strings.Index(outFilnam, ".yaml"); idx == -1 {outFilnam += ".yaml"}
+
+	tokval, ok := flagMap["token"]
+	if !ok {
+        fmt.Printf("usage: %s\n", useStr)
+		log.Fatalf("no token flag!")
+	}
+	token := tokval.(string)
+
+	if len(token) == 0 {
+        fmt.Printf("usage: %s\n", useStr)
+		log.Fatalf("no token provided with /token flag!")
+	}
+
+	_, ok = flagMap["dbg"]
+	if ok { dbg = true }
 
 	cfTokenFilnam += outFilnam
 
-    log.Printf("Using yaml file: %s\n", cfTokenFilnam)
+	if dbg {
+		for k,v := range flagMap {
+			fmt.Printf("flag: /%s value: %s\n", k, v)
+		}
+		log.Printf("Using token: %s\n", token)
+		log.Printf("Using yaml file: %s\n", cfTokenFilnam)
+	}
+
+//	fmt.Println("************** token *********************")
+
+
+//	cfLib.PrintToken(token)
 
     fmt.Println("********************************************")
 
+	err = cfLib.CreateTokFile(cfTokenFilnam, token, dbg)
+	if err != nil {log.Fatalf("CreateTokenFilnam: %v", err) }
 
-    apiObj, err := cfLib.InitCfApi(cfTokenFilnam)
-    if err != nil {
-        log.Fatalf("cfLib.InitCfLib: %v\n", err)
-    }
-    // print results
-    cfLib.PrintApiObj (apiObj.ApiObj)
-
-
-	fmt.Println("************** before *********************")
-
-
-//	cfLib.PrintD
-
+	log.Printf("success creating token file!\n")
 }
-
