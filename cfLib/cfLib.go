@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 	"context"
+	"strings"
+
 
     yaml "github.com/goccy/go-yaml"
     "github.com/cloudflare/cloudflare-go"
@@ -20,9 +22,11 @@ type ApiObj struct {
     Api    string `yaml:"Api"`
     ApiKey string `yaml:"ApiKey"`
     ApiToken string `yaml:"ApiToken"`
-	AccountId string `yaml:"AccountId"`
-	Name string `yaml:"Name"`
+	TokenId string `yaml:"token Id"`
+	TokName string `yaml:"Token Name"`
+	Start time.Time `yaml:"Start"`
 	Expiration time.Time `yaml:"Expire"`
+	AccountId string `yaml:"AccountId"`
     Email     string `yaml:"Email"`
 	YamlFile	string `yaml:"cfToken File"`
 }
@@ -108,14 +112,13 @@ func InitCfLib(yamlFilnam string) (apiObjRef *ApiObj, err error) {
 //  function that initiates the cloudflare api with a yaml api file containing a token
 func InitCfApi(apiFilnam string) (cfapi *cfApi, err error) {
 
-	yamlFilnam := ""
-
 	cfDir := os.Getenv("Cloudflare")
 	if len(cfDir) == 0 {return nil, fmt.Errorf("could not get env: Cloudflare\n")}
 
-	if len(apiFilnam) == 0 {
-	    yamlFilnam = cfDir + "/token/cfZones.yaml"
-	} else {
+	yamlFilnam := cfDir + "/token/cfZones.yaml"
+
+
+	if len(apiFilnam) > 0 {
 		yamlFilnam = cfDir + "/token/" + apiFilnam
 	}
 
@@ -125,9 +128,67 @@ func InitCfApi(apiFilnam string) (cfapi *cfApi, err error) {
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
 	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v/n", err)}
 
-	cfApiObj := &cfApi{API: api, ApiObj: apiObj}
+	cfApiObj := &cfApi{API: api, ApiObj: apiObj,}
 
 	return cfApiObj, nil
+}
+
+func CreateTokFile(filnam string, token string) (err error){
+
+	api, err := cloudflare.NewWithAPIToken(token)
+	if err != nil {return fmt.Errorf("NewWithAPIToken: %v/n", err)}
+
+	if len(filnam) ==0 {return fmt.Errorf("no filnam provided!")}
+
+	idx := strings.Index(filnam, ".yaml")
+	if idx == -1 { filnam += ".yaml"}
+
+	cfDir := os.Getenv("Cloudflare")
+	if len(cfDir) == 0 {return fmt.Errorf("could not get env: Cloudflare\n")}
+
+	// todo: check whether token dir exists
+
+	tokFilnam := cfDir + "/token/" + filnam
+	fmt.Printf("token filnam: %s/n", tokFilnam)
+
+    ctx := context.Background()
+
+	tokResp, err := api.VerifyAPIToken(ctx)
+	if err != nil {return fmt.Errorf("VerifyApiToken: %v", err)}
+	if tokResp.Status != "valid" {return fmt.Errorf("invalis status returned!")}
+
+	apiObj := ApiObj{
+		Api: "Cloudflare",
+		ApiKey: "na",
+		ApiToken: token,
+		TokenId: tokResp.ID,
+		TokName: "",
+		Start: tokResp.NotBefore,
+		Expiration: tokResp.ExpiresOn,
+		AccountId: "d0e0781201c0536742831e308ce406fb",
+		Email: "azulsoftwarevlc@gmail.com",
+		YamlFile: filnam,
+	}
+
+	tok, err := api.GetAPIToken(ctx, tokResp.ID)
+	if err != nil {return fmt.Errorf("GetApiToken: %v", err)}
+
+	apiObj.TokName = tok.Name
+
+//ww
+	outfil, err := os.Create(tokFilnam)
+	if err != nil {return fmt.Errorf("os.Create: %v", err)}
+
+	_, err = outfil.Write([]byte("---\n"))
+	if err != nil {return fmt.Errorf("header outfil.Write: %v", err)}
+
+	jsonData, err := json.Marshal(&apiObj)
+	if err != nil {return fmt.Errorf("json.Marshal: %v", err)}
+
+	_, err = outfil.Write(jsonData)
+	if err != nil {return fmt.Errorf("jsonData os=utfil.Write: %v", err)}
+
+	return nil
 }
 
 func VerifyCFToken (tokFilnam string) (err error) {
@@ -548,17 +609,34 @@ func PrintZoneList(zoneList *ZoneList){
     }
 }
 
-
+/*
+type ApiObj struct {
+    Api    string `yaml:"Api"`
+    ApiKey string `yaml:"ApiKey"`
+    ApiToken string `yaml:"ApiToken"`
+	TokenId string `yaml:"token Id"`
+	TokName string `yaml:"Token Name"`
+	Start time.Time `yaml:"Start"`
+	Expiration time.Time `yaml:"Expire"`
+	AccountId string `yaml:"AccountId"`
+    Email     string `yaml:"Email"`
+	YamlFile	string `yaml:"cfToken File"`
+}
+*/
 
 func PrintApiObj (apiObj *ApiObj) {
 
     fmt.Println("***************** Api Obj ******************")
     fmt.Printf("API:       %s\n", apiObj.Api)
     fmt.Printf("APIKey:    %s\n", apiObj.ApiKey)
-    fmt.Printf("APIToken:  %s\n", apiObj.ApiToken)
+    fmt.Printf("ApiToken:  %s\n", apiObj.ApiToken)
+    fmt.Printf("TokenId:   %s\n", apiObj.TokenId)
+    fmt.Printf("TokName:   %s\n", apiObj.TokName)
+    fmt.Printf("Start:     %s\n", apiObj.Start.Format(time.RFC1123))
+    fmt.Printf("Expiry:    %s\n", apiObj.Expiration.Format(time.RFC1123))
     fmt.Printf("AccountId: %s\n", apiObj.AccountId)
-    fmt.Printf("Name:     %s\n", apiObj.Name)
     fmt.Printf("Email:     %s\n", apiObj.Email)
+    fmt.Printf("YamlFile:  %s\n", apiObj.YamlFile)
     fmt.Println("********************************************")
 }
 
