@@ -8,6 +8,7 @@ package cfLib
 import (
 	"fmt"
 	"os"
+	"log"
 	"time"
 	"context"
 	"strings"
@@ -22,13 +23,13 @@ type ApiObj struct {
     Api    string `yaml:"Api"`
     ApiKey string `yaml:"ApiKey"`
     ApiToken string `yaml:"ApiToken"`
-	TokenId string `yaml:"token Id"`
-	TokName string `yaml:"Token Name"`
+	TokenId string `yaml:"TokenId"`
+	TokName string `yaml:"TokenName"`
 	Start time.Time `yaml:"Start"`
 	Expiration time.Time `yaml:"Expire"`
 	AccountId string `yaml:"AccountId"`
     Email     string `yaml:"Email"`
-	YamlFile	string `yaml:"cfToken File"`
+	YamlFile	string `yaml:"cfTokenFile"`
 }
 
 type cfApi struct {
@@ -133,13 +134,13 @@ func InitCfApi(apiFilnam string) (cfapi *cfApi, err error) {
 	return cfApiObj, nil
 }
 
-func CreateTokFile(filnam string, token string) (err error){
+func CreateTokFile(filnam string, token string, dbg bool) (err error){
 
 	api, err := cloudflare.NewWithAPIToken(token)
 	if err != nil {return fmt.Errorf("NewWithAPIToken: %v/n", err)}
+	if dbg {log.Printf("cf api returned")}
 
 	if len(filnam) ==0 {return fmt.Errorf("no filnam provided!")}
-
 	idx := strings.Index(filnam, ".yaml")
 	if idx == -1 { filnam += ".yaml"}
 
@@ -148,14 +149,20 @@ func CreateTokFile(filnam string, token string) (err error){
 
 	// todo: check whether token dir exists
 
-	tokFilnam := cfDir + "/token/" + filnam
-	fmt.Printf("token filnam: %s/n", tokFilnam)
+	rdTokFilnam := cfDir + "/token/cfTokRead.yaml"
+
+	tokFilnam := filnam
+	if dbg {log.Printf("token filnam: %s/n", tokFilnam)}
 
     ctx := context.Background()
 
 	tokResp, err := api.VerifyAPIToken(ctx)
 	if err != nil {return fmt.Errorf("VerifyApiToken: %v", err)}
-	if tokResp.Status != "valid" {return fmt.Errorf("invalis status returned!")}
+
+	if dbg {PrintTokResp(&tokResp)}
+
+	if tokResp.Status != "active" {return fmt.Errorf("invalid status returned! %s", tokResp.Status)}
+
 
 	apiObj := ApiObj{
 		Api: "Cloudflare",
@@ -170,23 +177,33 @@ func CreateTokFile(filnam string, token string) (err error){
 		YamlFile: filnam,
 	}
 
-	tok, err := api.GetAPIToken(ctx, tokResp.ID)
+	rdTokDat, err := os.ReadFile(rdTokFilnam)
+	if err != nil {return fmt.Errorf("readFile rdToken: %v", err)}
+
+	tokApiObj := ApiObj{}
+	err = yaml.Unmarshal(rdTokDat, &tokApiObj)
+	if err != nil {return fmt.Errorf("Unmarshal reTokDat: %v", err)}
+
+	tokApi, err := cloudflare.NewWithAPIToken(tokApiObj.ApiToken)
+	if err != nil {return fmt.Errorf("NewWithAPIToken tokApi: %v/n", err)}
+
+	tok, err := tokApi.GetAPIToken(ctx, tokResp.ID)
 	if err != nil {return fmt.Errorf("GetApiToken: %v", err)}
 
 	apiObj.TokName = tok.Name
-
 //ww
+	if dbg {PrintToken(tok)}
 	outfil, err := os.Create(tokFilnam)
 	if err != nil {return fmt.Errorf("os.Create: %v", err)}
 
 	_, err = outfil.Write([]byte("---\n"))
 	if err != nil {return fmt.Errorf("header outfil.Write: %v", err)}
 
-	jsonData, err := json.Marshal(&apiObj)
-	if err != nil {return fmt.Errorf("json.Marshal: %v", err)}
+	yamlData, err := yaml.Marshal(&apiObj)
+	if err != nil {return fmt.Errorf("yaml.Marshal: %v", err)}
 
-	_, err = outfil.Write(jsonData)
-	if err != nil {return fmt.Errorf("jsonData os=utfil.Write: %v", err)}
+	_, err = outfil.Write(yamlData)
+	if err != nil {return fmt.Errorf("yamlData os=utfil.Write: %v", err)}
 
 	return nil
 }
