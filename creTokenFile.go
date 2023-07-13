@@ -32,7 +32,7 @@ func main() {
     cfDir := os.Getenv("Cloudflare")
     if len(cfDir) == 0 {log.Fatalf("could not resolve Cloudflare\n")}
 
-    cfTokenFilnam := cfDir + "/token/"
+//    cfTokenFilnam := cfDir + "/token/"
 
 	if numArgs == 2 && os.Args[1] == "help" {
 		fmt.Printf("help: %s\n", helpStr)
@@ -84,7 +84,7 @@ func main() {
 	_, ok = flagMap["dbg"]
 	if ok { dbg = true }
 
-	cfTokenFilnam += outFilnam
+	cfTokenFilnam := outFilnam
 
 	if dbg {
 		for k,v := range flagMap {
