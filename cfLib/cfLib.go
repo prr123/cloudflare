@@ -151,7 +151,7 @@ func CreateTokFile(filnam string, token string, dbg bool) (err error){
 
 	rdTokFilnam := cfDir + "/token/cfTokRead.yaml"
 
-	tokFilnam := filnam
+	tokFilnam := cfDir + "/token/" + filnam
 	if dbg {log.Printf("token filnam: %s\n", tokFilnam)}
 
     ctx := context.Background()
