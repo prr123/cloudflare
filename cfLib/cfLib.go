@@ -127,7 +127,7 @@ func InitCfApi(apiFilnam string) (cfapi *cfApi, err error) {
     if err != nil {return nil, fmt.Errorf("cfLib.InitCfLib: %v\n", err)}
 
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v/n", err)}
+	if err != nil {return nil, fmt.Errorf("NewWithAPIToken: %v\n", err)}
 
 	cfApiObj := &cfApi{API: api, ApiObj: apiObj,}
 
@@ -137,7 +137,7 @@ func InitCfApi(apiFilnam string) (cfapi *cfApi, err error) {
 func CreateTokFile(filnam string, token string, dbg bool) (err error){
 
 	api, err := cloudflare.NewWithAPIToken(token)
-	if err != nil {return fmt.Errorf("NewWithAPIToken: %v/n", err)}
+	if err != nil {return fmt.Errorf("NewWithAPIToken: %v\n", err)}
 	if dbg {log.Printf("cf api returned")}
 
 	if len(filnam) ==0 {return fmt.Errorf("no filnam provided!")}
@@ -152,7 +152,7 @@ func CreateTokFile(filnam string, token string, dbg bool) (err error){
 	rdTokFilnam := cfDir + "/token/cfTokRead.yaml"
 
 	tokFilnam := filnam
-	if dbg {log.Printf("token filnam: %s/n", tokFilnam)}
+	if dbg {log.Printf("token filnam: %s\n", tokFilnam)}
 
     ctx := context.Background()
 
@@ -185,7 +185,7 @@ func CreateTokFile(filnam string, token string, dbg bool) (err error){
 	if err != nil {return fmt.Errorf("Unmarshal reTokDat: %v", err)}
 
 	tokApi, err := cloudflare.NewWithAPIToken(tokApiObj.ApiToken)
-	if err != nil {return fmt.Errorf("NewWithAPIToken tokApi: %v/n", err)}
+	if err != nil {return fmt.Errorf("NewWithAPIToken tokApi: %v\n", err)}
 
 	tok, err := tokApi.GetAPIToken(ctx, tokResp.ID)
 	if err != nil {return fmt.Errorf("GetApiToken: %v", err)}
@@ -239,7 +239,7 @@ func VerifyCFToken (tokFilnam string) (err error) {
 	}
 
 	api, err := cloudflare.NewWithAPIToken(apiObj.ApiToken)
-	if err != nil {return fmt.Errorf("NewWithAPIToken: %v/n", err)}
+	if err != nil {return fmt.Errorf("NewWithAPIToken: %v\n", err)}
 
     ctx := context.Background()
 
